@@ -1187,24 +1187,31 @@ async function init() {
     show('config-screen');
     return;
   }
+
+  const timeout = setTimeout(() => {
+    hide('loading-screen');
+    show('auth-screen');
+    authErr('Verbindung zu Supabase fehlgeschlagen. Bitte prüfe Authentication → URL Configuration in Supabase.');
+  }, 8000);
+
   try {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session }, error } = await supabase.auth.getSession();
+    clearTimeout(timeout);
     hide('loading-screen');
-    if (session) {
-      currentUser = session.user;
-      showApp();
-    } else {
-      show('auth-screen');
-    }
+    if (error) { show('auth-screen'); authErr('Fehler: ' + error.message); return; }
+    if (session) { currentUser = session.user; showApp(); }
+    else { show('auth-screen'); }
     supabase.auth.onAuthStateChange((_event, session) => {
       currentUser = session?.user || null;
       if (currentUser) showApp();
       else { hide('main-screen'); show('auth-screen'); }
     });
   } catch(e) {
+    clearTimeout(timeout);
     hide('loading-screen');
     show('auth-screen');
+    authErr('Verbindungsfehler: ' + (e.message || 'Unbekannter Fehler'));
     console.error('Supabase init error:', e);
   }
 }
