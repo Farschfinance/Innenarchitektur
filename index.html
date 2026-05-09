@@ -2,1496 +2,760 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Innenarchitektur">
 <meta name="theme-color" content="#1B1D22">
 <title>Innenarchitektur – Dein Traumatagebuch</title>
-
-<!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
-/* ============================================================
-   DESIGN TOKENS
-   ============================================================ */
 :root {
-  --bg0: #1B1D22;
-  --bg1: #22262E;
-  --bg2: #2A2E36;
-  --bg3: #333843;
-  --bg4: #3C4250;
-  --border: rgba(255,255,255,0.07);
-  --border2: rgba(255,255,255,0.13);
-  --text:  #E6E3DD;
-  --text2: #9E9A92;
-  --text3: #5C5850;
-  --gold:  #4E7A7A;
-  --gold2: #7AADA8;
-  --gold3: rgba(78,122,122,0.18);
-  --gold-b: rgba(78,122,122,0.38);
-  --rose:  #9A6E7E;
-  --rose2: #C49AAE;
-  --rose3: rgba(154,110,126,0.18);
-  --teal:  #4E7A7A;
-  --teal2: #7AADA8;
-  --teal3: rgba(78,122,122,0.18);
-  --violet: #7D7396;
-  --violet2: #A89EC8;
-  --violet3: rgba(125,115,150,0.18);
-  --red:   #8C4A4A;
-  --red2:  #C48080;
-  --red3:  rgba(140,74,74,0.22);
-  --r8: 8px;
-  --r12: 12px;
-  --r16: 16px;
-  --r20: 20px;
+  --bg0:#1B1D22; --bg1:#22262E; --bg2:#2A2E36; --bg3:#333843; --bg4:#3C4250;
+  --border:rgba(230,227,221,0.07); --border2:rgba(230,227,221,0.14);
+  --text:#E6E3DD; --text2:#9E9A92; --text3:#5C5850;
+  --acc:#4E7A7A; --acc2:#7AADA8; --acc3:rgba(78,122,122,0.18); --acc-b:rgba(78,122,122,0.38);
+  --vio:#7D7396; --vio2:#A89EC8; --vio3:rgba(125,115,150,0.18);
+  --ros:#9A6E7E; --ros2:#C49AAE; --ros3:rgba(154,110,126,0.18);
+  --red:#8C4A4A; --red2:#C48080; --red3:rgba(140,74,74,0.22);
+  --r8:8px; --r12:12px; --r16:16px; --r20:20px;
 }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{height:100%;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg0);color:var(--text);font-family:Georgia,'Times New Roman',serif;min-height:100%;line-height:1.6;-webkit-font-smoothing:antialiased}
+textarea,input{-webkit-appearance:none;appearance:none}
+button{cursor:pointer}
 
-/* ============================================================
-   RESET + BASE
-   ============================================================ */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { height: 100%; -webkit-tap-highlight-color: transparent; }
-body {
-  background: var(--bg0);
-  color: var(--text);
-  font-family: 'Georgia', 'Times New Roman', serif;
-  min-height: 100%;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
-textarea, input { -webkit-appearance: none; appearance: none; }
+/* ── LOADING ── */
+#screen-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:1rem;color:var(--text3);font-family:sans-serif;font-size:.85rem}
+.spinner{width:28px;height:28px;border:2px solid var(--border2);border-top-color:var(--acc);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-/* ============================================================
-   LAYOUT SHELL
-   ============================================================ */
-#app { display: flex; flex-direction: column; min-height: 100vh; }
+/* ── AUTH ── */
+#screen-auth{display:none;align-items:center;justify-content:center;min-height:100vh;padding:1.5rem}
+.auth-card{background:var(--bg1);border:1px solid var(--border2);border-radius:var(--r20);padding:2rem 1.75rem;width:100%;max-width:400px}
+.auth-logo{text-align:center;padding-bottom:1.5rem;margin-bottom:1.5rem;border-bottom:1px solid var(--border)}
+.auth-logo h1{font-size:1.6rem;color:var(--acc2);font-weight:normal;letter-spacing:-.5px}
+.auth-logo p{font-size:.72rem;color:var(--text3);font-family:sans-serif;text-transform:uppercase;letter-spacing:1.2px;margin-top:.3rem}
+.fg{margin-bottom:1rem}
+.fg label{display:block;font-size:.7rem;color:var(--text3);font-family:sans-serif;text-transform:uppercase;letter-spacing:.6px;margin-bottom:.35rem}
+.fg input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);padding:.7rem .9rem;color:var(--text);font-size:.92rem;font-family:Georgia,serif;outline:none;transition:border-color .2s}
+.fg input:focus{border-color:var(--acc-b)}
+.btn-acc{width:100%;padding:.82rem;background:var(--acc3);color:var(--acc2);border:1px solid var(--acc-b);border-radius:var(--r8);font-size:.95rem;font-family:Georgia,serif;transition:all .2s}
+.btn-acc:hover{background:rgba(78,122,122,.3)}
+.btn-acc:disabled{opacity:.5;cursor:not-allowed}
+.auth-sw{text-align:center;margin-top:1rem;font-size:.8rem;color:var(--text3);font-family:sans-serif}
+.auth-sw a{color:var(--acc2);cursor:pointer;text-decoration:underline}
+.auth-err{background:var(--red3);border:1px solid rgba(140,74,74,.4);border-radius:var(--r8);padding:.65rem .9rem;color:var(--red2);font-size:.82rem;font-family:sans-serif;margin-bottom:1rem;display:none}
+.auth-ok{background:var(--acc3);border:1px solid var(--acc-b);border-radius:var(--r8);padding:.65rem .9rem;color:var(--acc2);font-size:.82rem;font-family:sans-serif;margin-bottom:1rem;display:none}
+.auth-info{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);padding:.7rem .9rem;font-size:.75rem;color:var(--text3);font-family:sans-serif;margin-top:1rem;line-height:1.6}
 
-/* ============================================================
-   AUTH SCREEN
-   ============================================================ */
-#auth-screen {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 1.5rem;
-}
-.auth-card {
-  background: var(--bg1);
-  border: 1px solid var(--border2);
-  border-radius: var(--r20);
-  padding: 2rem 1.75rem;
-  width: 100%;
-  max-width: 400px;
-}
-.auth-logo {
-  text-align: center;
-  padding-bottom: 1.5rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border);
-}
-.auth-logo h1 {
-  font-size: 1.6rem;
-  color: var(--gold2);
-  font-weight: normal;
-  letter-spacing: -0.5px;
-}
-.auth-logo p {
-  font-size: 0.72rem;
-  color: var(--text3);
-  font-family: sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  margin-top: 0.3rem;
-}
-.fg { margin-bottom: 1rem; }
-.fg label {
-  display: block;
-  font-size: 0.7rem;
-  color: var(--text3);
-  font-family: sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  margin-bottom: 0.35rem;
-}
-.fg input {
-  width: 100%;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r8);
-  padding: 0.7rem 0.9rem;
-  color: var(--text);
-  font-size: 0.92rem;
-  font-family: 'Georgia', serif;
-  outline: none;
-  transition: border-color 0.2s;
-}
-.fg input:focus { border-color: var(--gold-b); }
-.btn-gold {
-  width: 100%;
-  padding: 0.82rem;
-  background: var(--gold3);
-  color: var(--gold2);
-  border: 1px solid var(--gold-b);
-  border-radius: var(--r8);
-  font-size: 0.95rem;
-  font-family: 'Georgia', serif;
-  cursor: pointer;
-  transition: all 0.2s;
-  letter-spacing: 0.2px;
-}
-.btn-gold:hover { background: rgba(201,168,76,0.3); }
-.btn-gold:disabled { opacity: 0.5; cursor: not-allowed; }
-.auth-sw {
-  text-align: center;
-  margin-top: 1rem;
-  font-size: 0.8rem;
-  color: var(--text3);
-  font-family: sans-serif;
-}
-.auth-sw a { color: var(--gold); cursor: pointer; text-decoration: underline; }
-.auth-err {
-  background: var(--red3);
-  border: 1px solid rgba(196,80,80,0.4);
-  border-radius: var(--r8);
-  padding: 0.65rem 0.9rem;
-  color: var(--red2);
-  font-size: 0.82rem;
-  font-family: sans-serif;
-  margin-bottom: 1rem;
-  display: none;
-}
-.auth-info {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r8);
-  padding: 0.7rem 0.9rem;
-  font-size: 0.75rem;
-  color: var(--text3);
-  font-family: sans-serif;
-  margin-top: 1rem;
-  line-height: 1.6;
-}
+/* ── MAIN ── */
+#screen-main{display:none;flex-direction:column;min-height:100vh}
+.topbar{background:var(--bg1);border-bottom:1px solid var(--border);padding:.65rem 1rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-brand{color:var(--acc2);font-size:.95rem;letter-spacing:-.3px;display:flex;align-items:center;gap:.5rem}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--acc);transition:background .3s}
+.sync-dot.syncing{background:var(--vio2);animation:pulse 1s infinite}
+.sync-dot.err{background:var(--red2)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.topbar-right{display:flex;align-items:center;gap:.5rem}
+.topbar-user{font-size:.7rem;color:var(--text3);font-family:sans-serif;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-sm{background:none;border:1px solid var(--border);border-radius:6px;padding:.28rem .65rem;color:var(--text3);font-size:.7rem;font-family:sans-serif;transition:all .15s}
+.btn-sm:hover{border-color:var(--border2);color:var(--text2)}
+.sos-btn{background:var(--red3);border:1px solid rgba(140,74,74,.4);border-radius:6px;padding:.28rem .7rem;color:var(--red2);font-size:.72rem;font-family:sans-serif;font-weight:600;letter-spacing:.3px;transition:all .15s}
+.sos-btn:hover{background:rgba(140,74,74,.35)}
 
-/* ============================================================
-   CONFIG SCREEN (Supabase Setup)
-   ============================================================ */
-#config-screen {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 1.5rem;
-}
-.config-card {
-  background: var(--bg1);
-  border: 1px solid var(--gold-b);
-  border-radius: var(--r20);
-  padding: 2rem 1.75rem;
-  width: 100%;
-  max-width: 480px;
-}
-.config-card h2 { color: var(--gold2); font-size: 1.1rem; font-weight: normal; margin-bottom: 0.5rem; }
-.config-card p { font-size: 0.82rem; color: var(--text2); font-family: sans-serif; line-height: 1.6; margin-bottom: 1.25rem; }
-.config-card code {
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  border-radius: 4px;
-  padding: 0.15rem 0.4rem;
-  font-size: 0.8rem;
-  color: var(--teal2);
-  font-family: monospace;
-}
-.config-step {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r8);
-  padding: 0.85rem;
-  margin-bottom: 0.6rem;
-  font-size: 0.8rem;
-  color: var(--text2);
-  font-family: sans-serif;
-  line-height: 1.6;
-}
-.config-step strong { color: var(--text); }
+.tabnav{background:var(--bg1);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;padding:0 .5rem;scrollbar-width:none}
+.tabnav::-webkit-scrollbar{display:none}
+.tab{padding:.8rem 1rem;border:none;background:none;font-size:.73rem;color:var(--text3);font-family:sans-serif;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;letter-spacing:.2px}
+.tab.on{color:var(--acc2);border-bottom-color:var(--acc)}
+.tab:hover:not(.on){color:var(--text2)}
 
-/* ============================================================
-   LOADING
-   ============================================================ */
-#loading-screen {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  flex-direction: column;
-  gap: 1rem;
-  color: var(--text3);
-  font-family: sans-serif;
-  font-size: 0.85rem;
-}
-.spinner {
-  width: 28px; height: 28px;
-  border: 2px solid var(--border2);
-  border-top-color: var(--gold);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+.content{flex:1;padding:1rem;max-width:680px;margin:0 auto;width:100%}
+.panel{display:none}
+.panel.on{display:block}
 
-/* ============================================================
-   MAIN APP
-   ============================================================ */
-#main-screen { display: none; flex-direction: column; min-height: 100vh; }
+/* ── CARDS ── */
+.card{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r12);padding:1.25rem;margin-bottom:.75rem}
+.card-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem}
+.card-title{font-size:1rem;color:var(--acc2);font-weight:normal}
+.card-sub{font-size:.7rem;color:var(--text3);font-family:sans-serif;margin-top:.2rem;letter-spacing:.3px}
 
-/* Top bar */
-.topbar {
-  background: var(--bg1);
-  border-bottom: 1px solid var(--border);
-  padding: 0.65rem 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-.topbar-brand { color: var(--gold2); font-size: 0.95rem; letter-spacing: -0.3px; }
-.topbar-right { display: flex; align-items: center; gap: 0.6rem; }
-.topbar-user { font-size: 0.7rem; color: var(--text3); font-family: sans-serif; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.btn-sm {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.28rem 0.65rem;
-  color: var(--text3);
-  font-size: 0.7rem;
-  font-family: sans-serif;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.btn-sm:hover { border-color: var(--border2); color: var(--text2); }
-.sos-btn {
-  background: var(--red3);
-  border: 1px solid rgba(196,80,80,0.4);
-  border-radius: 6px;
-  padding: 0.28rem 0.7rem;
-  color: var(--red2);
-  font-size: 0.72rem;
-  font-family: sans-serif;
-  font-weight: 600;
-  cursor: pointer;
-  letter-spacing: 0.3px;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.sos-btn:hover { background: rgba(196,80,80,0.3); }
+/* ── FORM ── */
+.sec-label{font-size:.67rem;color:var(--text3);font-family:sans-serif;text-transform:uppercase;letter-spacing:.8px;margin-bottom:.6rem;display:flex;align-items:center;gap:.4rem}
+.sec-dot{width:5px;height:5px;border-radius:50%;background:var(--acc3);border:1px solid var(--acc-b);display:inline-block}
+.fg-d{margin-bottom:.85rem}
+.fg-d label{display:block;font-size:.73rem;color:var(--text2);font-family:sans-serif;margin-bottom:.3rem}
+.fg-d textarea,.fg-d input[type=text]{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);padding:.65rem .85rem;color:var(--text);font-size:.88rem;font-family:Georgia,serif;outline:none;resize:vertical;transition:border-color .2s}
+.fg-d textarea{min-height:75px}
+.fg-d textarea:focus,.fg-d input[type=text]:focus{border-color:var(--acc-b)}
+.fg-d input[type=range]{width:100%;accent-color:var(--acc)}
+.scale-row{display:flex;align-items:center;gap:.75rem}
+.scale-row input{flex:1}
+.scale-val{font-size:1rem;color:var(--acc2);min-width:22px;text-align:center;font-weight:500}
+.scale-labs{display:flex;justify-content:space-between;font-size:.67rem;color:var(--text3);font-family:sans-serif;margin-top:.15rem}
 
-/* Tab nav */
-.tabnav {
-  background: var(--bg1);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  overflow-x: auto;
-  padding: 0 0.5rem;
-  scrollbar-width: none;
-}
-.tabnav::-webkit-scrollbar { display: none; }
-.tab {
-  padding: 0.8rem 1rem;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 0.73rem;
-  color: var(--text3);
-  font-family: sans-serif;
-  white-space: nowrap;
-  border-bottom: 2px solid transparent;
-  transition: all 0.15s;
-  letter-spacing: 0.2px;
-}
-.tab.on { color: var(--gold2); border-bottom-color: var(--gold); }
-.tab:hover:not(.on) { color: var(--text2); }
+.mood-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;margin-bottom:1rem}
+.mood-btn{padding:.5rem .2rem;border:1px solid var(--border);border-radius:var(--r8);background:var(--bg2);font-size:.67rem;font-family:sans-serif;text-align:center;transition:all .15s;color:var(--text2);line-height:1.3;user-select:none}
+.mood-btn:hover{border-color:var(--border2);color:var(--text)}
+.mood-btn.on{background:var(--acc3);border-color:var(--acc-b);color:var(--acc2)}
+.mood-em{font-size:1.1rem;display:block;margin-bottom:.2rem}
 
-/* Sync indicator */
-.sync-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--teal);
-  display: inline-block;
-  margin-left: 4px;
-  transition: background 0.3s;
-}
-.sync-dot.syncing { background: var(--gold); animation: pulse 1s infinite; }
-.sync-dot.error { background: var(--red); }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.refl{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);padding:.85rem;margin-bottom:.6rem}
+.refl q{font-size:.83rem;color:var(--text2);font-style:italic;display:block;margin-bottom:.5rem;line-height:1.55}
+.refl textarea{background:var(--bg1);min-height:60px;font-size:.83rem;margin-top:.25rem}
+.divider{border:none;border-top:1px solid var(--border);margin:1.1rem 0}
 
-/* Content */
-.content {
-  flex: 1;
-  padding: 1rem;
-  max-width: 680px;
-  margin: 0 auto;
-  width: 100%;
-}
+/* ── BUTTONS ── */
+.save-bar{background:var(--bg1);border-top:1px solid var(--border);padding:.85rem 1rem;display:flex;gap:.75rem}
+.btn-main{flex:1;padding:.8rem;background:var(--acc3);color:var(--acc2);border:1px solid var(--acc-b);border-radius:var(--r8);font-size:.88rem;font-family:Georgia,serif;transition:all .2s}
+.btn-main:hover{background:rgba(78,122,122,.3)}
+.btn-main:disabled{opacity:.5;cursor:not-allowed}
+.btn-vio{flex:1;padding:.8rem;background:var(--vio3);color:var(--vio2);border:1px solid rgba(125,115,150,.35);border-radius:var(--r8);font-size:.88rem;font-family:Georgia,serif;transition:all .2s}
+.btn-vio:hover{background:rgba(125,115,150,.3)}
+.btn-ghost{padding:.8rem 1rem;background:none;border:1px solid var(--border);border-radius:var(--r8);font-size:.82rem;font-family:sans-serif;color:var(--text3);transition:all .15s}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text2)}
+.btn-rose{padding:.75rem 1rem;background:var(--ros3);color:var(--ros2);border:1px solid rgba(154,110,126,.35);border-radius:var(--r8);font-size:.85rem;font-family:sans-serif;width:100%;transition:all .2s}
+.btn-rose:hover{background:rgba(154,110,126,.3)}
+.btn-danger{flex:1;padding:.75rem;background:var(--red3);color:var(--red2);border:1px solid rgba(140,74,74,.35);border-radius:var(--r8);font-size:.82rem;font-family:sans-serif;text-align:center;transition:all .15s}
+.btn-danger:hover{background:rgba(140,74,74,.3)}
 
-/* ============================================================
-   PANELS
-   ============================================================ */
-.panel { display: none; }
-.panel.on { display: block; }
+/* ── STATS / CHARTS ── */
+.stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;margin-bottom:1rem}
+.stat-box{background:var(--bg2);border-radius:var(--r8);padding:.85rem;text-align:center}
+.stat-n{font-size:1.6rem;color:var(--acc2);line-height:1}
+.stat-l{font-size:.67rem;color:var(--text3);font-family:sans-serif;text-transform:uppercase;letter-spacing:.5px;margin-top:.25rem}
+.corr-item{margin-bottom:.75rem}
+.corr-top{display:flex;justify-content:space-between;margin-bottom:.25rem;font-size:.8rem}
+.corr-name{color:var(--text);font-family:sans-serif}
+.corr-val{color:var(--text3);font-family:sans-serif;font-size:.75rem}
+.bar-bg{height:6px;border-radius:3px;background:var(--bg3);overflow:hidden}
+.bar-fg{height:100%;border-radius:3px;transition:width .8s ease}
+.bar-chart{display:flex;align-items:flex-end;gap:3px;height:60px;margin-top:.5rem}
+.bar-chart-col{flex:1;border-radius:2px 2px 0 0;min-width:5px}
 
-/* ============================================================
-   CARDS
-   ============================================================ */
-.card {
-  background: var(--bg1);
-  border: 1px solid var(--border);
-  border-radius: var(--r12);
-  padding: 1.25rem;
-  margin-bottom: 0.75rem;
-}
-.card-hd {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-.card-title { font-size: 1rem; color: var(--gold2); font-weight: normal; }
-.card-sub {
-  font-size: 0.7rem;
-  color: var(--text3);
-  font-family: sans-serif;
-  margin-top: 0.2rem;
-  letter-spacing: 0.3px;
-}
+.kw-cloud{display:flex;flex-wrap:wrap;gap:.4rem}
+.kw{padding:.25rem .65rem;border-radius:20px;font-size:.75rem;font-family:sans-serif;border:1px solid}
+.kw-hi{background:var(--acc3);border-color:var(--acc-b);color:var(--acc2);font-size:.82rem}
+.kw-md{background:rgba(78,122,122,.07);border-color:rgba(78,122,122,.2);color:var(--text2)}
+.kw-lo{background:var(--bg2);border-color:var(--border);color:var(--text3);font-size:.72rem}
 
-/* ============================================================
-   FORM ELEMENTS
-   ============================================================ */
-.sec-label {
-  font-size: 0.67rem;
-  color: var(--text3);
-  font-family: sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-bottom: 0.6rem;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-.sec-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold3); border: 1px solid var(--gold-b); display: inline-block; }
-.fg-d { margin-bottom: 0.85rem; }
-.fg-d label {
-  display: block;
-  font-size: 0.73rem;
-  color: var(--text2);
-  font-family: sans-serif;
-  margin-bottom: 0.3rem;
-}
-.fg-d textarea,
-.fg-d input[type=text],
-.fg-d input[type=time] {
-  width: 100%;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r8);
-  padding: 0.65rem 0.85rem;
-  color: var(--text);
-  font-size: 0.88rem;
-  font-family: 'Georgia', serif;
-  outline: none;
-  resize: vertical;
-  transition: border-color 0.2s;
-}
-.fg-d textarea { min-height: 75px; }
-.fg-d textarea:focus,
-.fg-d input[type=text]:focus,
-.fg-d input[type=time]:focus { border-color: var(--gold-b); }
-.fg-d input[type=range] { width: 100%; accent-color: var(--gold); cursor: pointer; }
-.scale-row { display: flex; align-items: center; gap: 0.75rem; }
-.scale-row input { flex: 1; }
-.scale-val { font-size: 1rem; color: var(--gold2); min-width: 22px; text-align: center; font-weight: 500; }
-.scale-labs {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.67rem;
-  color: var(--text3);
-  font-family: sans-serif;
-  margin-top: 0.15rem;
-}
+/* ── ENTRIES ── */
+.filter-row{display:flex;gap:.5rem;margin-bottom:.75rem}
+.filter-btn{flex:1;padding:.5rem;border:1px solid var(--border);border-radius:var(--r8);background:var(--bg2);font-size:.73rem;font-family:sans-serif;color:var(--text3);transition:all .15s;text-align:center}
+.filter-btn.on{background:var(--acc3);border-color:var(--acc-b);color:var(--acc2)}
+.entry-card{border:1px solid var(--border);border-radius:var(--r12);padding:1rem;margin-bottom:.6rem;background:var(--bg2);transition:border-color .15s}
+.entry-card:hover{border-color:var(--border2)}
+.entry-date{font-size:.68rem;color:var(--acc);font-family:sans-serif;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.35rem}
+.entry-pre{font-size:.82rem;color:var(--text2);line-height:1.5}
+.entry-tags{display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.4rem}
+.etag{font-size:.67rem;padding:.15rem .45rem;border-radius:12px;font-family:sans-serif}
+.etag-m{background:var(--acc3);color:var(--acc2)}
+.etag-p{background:var(--ros3);color:var(--ros2)}
+.etag-t{background:var(--red3);color:var(--red2)}
+.etag-d{background:var(--vio3);color:var(--vio2)}
+.dream-card{border:1px solid rgba(125,115,150,.25);border-radius:var(--r12);padding:1rem;margin-bottom:.6rem;background:var(--bg2);transition:border-color .15s}
+.dream-card:hover{border-color:rgba(125,115,150,.45)}
+.dream-date{font-size:.68rem;color:var(--vio2);font-family:sans-serif;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.35rem}
 
-/* Mood grid */
-.mood-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.4rem; margin-bottom: 1rem; }
-.mood-btn {
-  padding: 0.5rem 0.2rem;
-  border: 1px solid var(--border);
-  border-radius: var(--r8);
-  background: var(--bg2);
-  cursor: pointer;
-  font-size: 0.67rem;
-  font-family: sans-serif;
-  text-align: center;
-  transition: all 0.15s;
-  color: var(--text2);
-  line-height: 1.3;
-  user-select: none;
-}
-.mood-btn:hover { border-color: var(--border2); color: var(--text); }
-.mood-btn.on { background: var(--gold3); border-color: var(--gold-b); color: var(--gold2); }
-.mood-em { font-size: 1.1rem; display: block; margin-bottom: 0.2rem; }
+/* ── PARTS ── */
+.part-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r12);padding:1rem;margin-bottom:.6rem;display:flex;align-items:flex-start;gap:.85rem}
+.part-av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;background:var(--bg3);border:1px solid var(--border2)}
+.part-nm{font-size:.9rem;color:var(--ros2);margin-bottom:.2rem}
+.part-rl{font-size:.75rem;color:var(--text2);line-height:1.4}
+.part-nd{font-size:.7rem;color:var(--vio2);margin-top:.25rem;font-family:sans-serif}
+.inline-form{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r8);padding:1rem;margin-bottom:.75rem}
 
-/* Reflection */
-.refl {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r8);
-  padding: 0.85rem;
-  margin-bottom: 0.6rem;
-}
-.refl q {
-  font-size: 0.83rem;
-  color: var(--text2);
-  font-style: italic;
-  display: block;
-  margin-bottom: 0.5rem;
-  line-height: 1.55;
-}
-.refl textarea { background: var(--bg1); min-height: 60px; font-size: 0.83rem; }
+/* ── TRIGGER ── */
+.trigger-item{display:flex;align-items:center;gap:.75rem;padding:.7rem .85rem;border:1px solid var(--border);border-radius:var(--r8);margin-bottom:.4rem;background:var(--bg2)}
+.tsev{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.tsev-hi{background:var(--red2)}
+.tsev-md{background:var(--vio2)}
+.tsev-lo{background:var(--acc2)}
+.ttxt{flex:1;font-size:.83rem;color:var(--text)}
+.tcnt{font-size:.7rem;color:var(--text3);font-family:sans-serif;white-space:nowrap}
 
-.divider { border: none; border-top: 1px solid var(--border); margin: 1.1rem 0; }
+/* ── SOS ── */
+.sos-wrap{display:none}
+.sos-wrap.on{display:block}
+.sos-hero{background:var(--red3);border:1px solid rgba(140,74,74,.35);border-radius:var(--r16);padding:1.5rem;margin-bottom:1rem;text-align:center}
+.sos-hero h2{color:var(--red2);font-size:1rem;font-weight:normal;margin-bottom:.4rem}
+.sos-hero p{color:var(--text2);font-size:.8rem;font-family:sans-serif;line-height:1.6}
+.sos-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem;margin-bottom:1rem}
+.sos-method{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r12);padding:1rem;text-align:left;transition:border-color .15s}
+.sos-method:hover{border-color:var(--border2)}
+.sos-icon{font-size:1.4rem;margin-bottom:.4rem}
+.sos-title{font-size:.8rem;color:var(--text);font-family:sans-serif;font-weight:500;margin-bottom:.15rem}
+.sos-sub{font-size:.7rem;color:var(--text3);font-family:sans-serif;line-height:1.4}
+.sos-step{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r12);padding:1.25rem;margin-bottom:.75rem}
+.sos-step h3{font-size:.92rem;color:var(--acc2);margin-bottom:.75rem;font-weight:normal}
+.sos-step p,.sos-step li{font-size:.82rem;color:var(--text2);line-height:1.7;font-family:sans-serif}
+.sos-step ol,.sos-step ul{padding-left:1.25rem}
+.sos-step li{margin-bottom:.35rem}
+.sos-step strong{color:var(--text)}
+.sos-step em{color:var(--text3)}
+.breath-circle{width:100px;height:100px;border-radius:50%;background:var(--acc3);border:2px solid var(--acc);margin:1rem auto;display:flex;align-items:center;justify-content:center;font-size:.78rem;color:var(--acc2);font-family:sans-serif;text-align:center;transition:transform .4s ease,background .4s ease;user-select:none}
+.breath-circle.in{transform:scale(1.35);background:rgba(78,122,122,.28)}
+.breath-circle.hold{transform:scale(1.35);background:rgba(122,173,168,.18)}
+.breath-circle.out{transform:scale(.78);background:rgba(42,80,80,.45)}
+.kotze-area{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r12);padding:1.25rem;margin-bottom:.75rem}
+.kotze-area h3{font-size:.92rem;color:var(--ros2);margin-bottom:.4rem;font-weight:normal}
+.kotze-area p{font-size:.75rem;color:var(--text3);font-family:sans-serif;margin-bottom:.75rem;line-height:1.6}
+.kotze-area textarea{width:100%;background:var(--bg1);border:1px solid var(--border);border-radius:var(--r8);padding:.85rem;color:var(--text);font-size:.9rem;font-family:Georgia,serif;outline:none;resize:vertical;min-height:160px}
+.sos-back{background:none;border:none;color:var(--text3);font-size:.78rem;font-family:sans-serif;padding:.4rem 0;margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem}
+.sos-back:hover{color:var(--text2)}
 
-/* ============================================================
-   BUTTONS
-   ============================================================ */
-.save-bar {
-  background: var(--bg1);
-  border-top: 1px solid var(--border);
-  padding: 0.85rem 1rem;
-  display: flex;
-  gap: 0.75rem;
-}
-.btn-main {
-  flex: 1;
-  padding: 0.8rem;
-  background: var(--gold3);
-  color: var(--gold2);
-  border: 1px solid var(--gold-b);
-  border-radius: var(--r8);
-  font-size: 0.88rem;
-  font-family: 'Georgia', serif;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-main:hover { background: rgba(201,168,76,0.3); }
-.btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-ghost {
-  padding: 0.8rem 1rem;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: var(--r8);
-  font-size: 0.82rem;
-  font-family: sans-serif;
-  cursor: pointer;
-  color: var(--text3);
-  transition: all 0.15s;
-}
-.btn-ghost:hover { border-color: var(--border2); color: var(--text2); }
-.btn-rose {
-  padding: 0.75rem 1rem;
-  background: var(--rose3);
-  color: var(--rose2);
-  border: 1px solid rgba(196,122,138,0.35);
-  border-radius: var(--r8);
-  font-size: 0.85rem;
-  font-family: sans-serif;
-  cursor: pointer;
-  width: 100%;
-  transition: all 0.2s;
-}
-.btn-rose:hover { background: rgba(196,122,138,0.3); }
-.btn-violet {
-  flex: 1;
-  padding: 0.8rem;
-  background: var(--violet3);
-  color: var(--violet2);
-  border: 1px solid rgba(122,106,170,0.35);
-  border-radius: var(--r8);
-  font-size: 0.88rem;
-  font-family: 'Georgia', serif;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-violet:hover { background: rgba(122,106,170,0.3); }
-.btn-dashed {
-  background: none;
-  border: 1px dashed var(--border2);
-  border-radius: var(--r8);
-  padding: 0.65rem;
-  width: 100%;
-  cursor: pointer;
-  color: var(--text3);
-  font-family: sans-serif;
-  font-size: 0.8rem;
-  transition: all 0.2s;
-}
-.btn-dashed:hover { border-color: rgba(196,122,138,0.5); color: var(--rose2); }
+/* ── DETAIL ── */
+.detail-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r16);padding:1.5rem;margin-bottom:1rem}
+.detail-box h2{font-size:1rem;color:var(--acc2);margin-bottom:1rem;font-weight:normal}
+.detail-table{width:100%;border-collapse:collapse}
+.detail-table td{padding:4px 0;vertical-align:top;font-size:.8rem;line-height:1.5}
+.detail-table td:first-child{font-size:.7rem;color:var(--text3);font-family:sans-serif;padding-right:10px;white-space:nowrap;width:90px}
+.detail-table td:last-child{color:var(--text)}
+.detail-actions{display:flex;gap:.6rem;margin-top:1.25rem}
+.detail-actions .btn-ghost{flex:1;text-align:center}
 
-/* ============================================================
-   STATISTICS / CHARTS
-   ============================================================ */
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.6rem;
-  margin-bottom: 1rem;
-}
-.stat-box {
-  background: var(--bg2);
-  border-radius: var(--r8);
-  padding: 0.85rem;
-  text-align: center;
-}
-.stat-n { font-size: 1.6rem; color: var(--gold2); line-height: 1; }
-.stat-l {
-  font-size: 0.67rem;
-  color: var(--text3);
-  font-family: sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 0.25rem;
-}
-.corr-item { margin-bottom: 0.75rem; }
-.corr-top { display: flex; justify-content: space-between; margin-bottom: 0.25rem; font-size: 0.8rem; }
-.corr-name { color: var(--text); font-family: sans-serif; }
-.corr-val { color: var(--text3); font-family: sans-serif; }
-.bar-bg { height: 6px; border-radius: 3px; background: var(--bg3); overflow: hidden; }
-.bar-fg { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
-.bar-chart { display: flex; align-items: flex-end; gap: 3px; height: 60px; margin-top: 0.5rem; }
-.bar-chart-col { flex: 1; border-radius: 2px 2px 0 0; min-width: 5px; transition: height 0.4s; }
+/* ── TOAST ── */
+.toast{background:var(--bg3);color:var(--text);padding:.6rem 1.1rem;border-radius:var(--r8);font-family:sans-serif;font-size:.8rem;border:1px solid var(--border2);opacity:0;transition:opacity .3s;margin:0 auto .75rem;display:block;text-align:center;max-width:320px;pointer-events:none}
+.toast.show{opacity:1}
 
-/* Keywords */
-.kw-cloud { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.kw {
-  padding: 0.25rem 0.65rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-family: sans-serif;
-  border: 1px solid;
-  cursor: default;
-}
-.kw-hi { background: var(--gold3); border-color: var(--gold-b); color: var(--gold2); font-size: 0.82rem; }
-.kw-md { background: rgba(201,168,76,0.07); border-color: rgba(201,168,76,0.2); color: var(--text2); }
-.kw-lo { background: var(--bg2); border-color: var(--border); color: var(--text3); font-size: 0.72rem; }
+/* ── EMPTY ── */
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--text3);font-family:sans-serif;font-size:.83rem;line-height:1.6}
+.empty-icon{font-size:2rem;margin-bottom:.5rem}
 
-/* ============================================================
-   ENTRIES
-   ============================================================ */
-.entry-filter { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
-.filter-btn {
-  flex: 1;
-  padding: 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: var(--r8);
-  background: var(--bg2);
-  cursor: pointer;
-  font-size: 0.73rem;
-  font-family: sans-serif;
-  color: var(--text3);
-  transition: all 0.15s;
-  text-align: center;
-}
-.filter-btn.on { background: var(--gold3); border-color: var(--gold-b); color: var(--gold2); }
-.entry-card {
-  border: 1px solid var(--border);
-  border-radius: var(--r12);
-  padding: 1rem;
-  margin-bottom: 0.6rem;
-  background: var(--bg2);
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-.entry-card:hover { border-color: var(--border2); }
-.entry-date {
-  font-size: 0.68rem;
-  color: var(--gold);
-  font-family: sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.35rem;
-}
-.entry-pre { font-size: 0.82rem; color: var(--text2); line-height: 1.5; }
-.entry-tags { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.4rem; }
-.etag { font-size: 0.67rem; padding: 0.15rem 0.45rem; border-radius: 12px; font-family: sans-serif; }
-.etag-m { background: var(--gold3); color: var(--gold2); }
-.etag-p { background: var(--rose3); color: var(--rose2); }
-.etag-t { background: var(--red3); color: var(--red2); }
-.etag-d { background: var(--violet3); color: var(--violet2); }
-
-/* Dream card */
-.dream-card {
-  border: 1px solid rgba(122,106,170,0.25);
-  border-radius: var(--r12);
-  padding: 1rem;
-  margin-bottom: 0.6rem;
-  background: var(--bg2);
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-.dream-card:hover { border-color: rgba(122,106,170,0.45); }
-.dream-date {
-  font-size: 0.68rem;
-  color: var(--violet2);
-  font-family: sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.35rem;
-}
-
-/* ============================================================
-   PARTS
-   ============================================================ */
-.part-card {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r12);
-  padding: 1rem;
-  margin-bottom: 0.6rem;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.85rem;
-}
-.part-av {
-  width: 42px; height: 42px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.2rem;
-  flex-shrink: 0;
-  background: var(--bg3);
-  border: 1px solid var(--border2);
-}
-.part-nm { font-size: 0.9rem; color: var(--rose2); margin-bottom: 0.2rem; }
-.part-rl { font-size: 0.75rem; color: var(--text2); line-height: 1.4; }
-.part-nd { font-size: 0.7rem; color: var(--violet2); margin-top: 0.25rem; font-family: sans-serif; }
-.inline-form {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r8);
-  padding: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-/* ============================================================
-   TRIGGER VIEW
-   ============================================================ */
-.trigger-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.7rem 0.85rem;
-  border: 1px solid var(--border);
-  border-radius: var(--r8);
-  margin-bottom: 0.4rem;
-  background: var(--bg2);
-}
-.tsev { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.tsev-hi { background: var(--red2); }
-.tsev-md { background: var(--gold2); }
-.tsev-lo { background: var(--teal2); }
-.ttxt { flex: 1; font-size: 0.83rem; color: var(--text); }
-.tcnt { font-size: 0.7rem; color: var(--text3); font-family: sans-serif; white-space: nowrap; }
-
-/* ============================================================
-   SOS / NOTFALL
-   ============================================================ */
-.sos-panel { display: none; }
-.sos-panel.on { display: block; }
-.sos-hero {
-  background: var(--red3);
-  border: 1px solid rgba(196,80,80,0.35);
-  border-radius: var(--r16);
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-.sos-hero h2 { color: var(--red2); font-size: 1rem; font-weight: normal; margin-bottom: 0.4rem; }
-.sos-hero p { color: var(--text2); font-size: 0.8rem; font-family: sans-serif; line-height: 1.6; }
-.sos-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; margin-bottom: 1rem; }
-.sos-method {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r12);
-  padding: 1rem;
-  cursor: pointer;
-  transition: border-color 0.15s;
-  text-align: left;
-}
-.sos-method:hover { border-color: var(--border2); }
-.sos-method-icon { font-size: 1.4rem; margin-bottom: 0.4rem; }
-.sos-method-title { font-size: 0.8rem; color: var(--text); font-family: sans-serif; font-weight: 500; margin-bottom: 0.15rem; }
-.sos-method-sub { font-size: 0.7rem; color: var(--text3); font-family: sans-serif; line-height: 1.4; }
-.sos-step {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r12);
-  padding: 1.25rem;
-  margin-bottom: 0.75rem;
-}
-.sos-step h3 { font-size: 0.92rem; color: var(--gold2); margin-bottom: 0.75rem; font-weight: normal; }
-.sos-step p, .sos-step li { font-size: 0.82rem; color: var(--text2); line-height: 1.7; font-family: sans-serif; }
-.sos-step ol, .sos-step ul { padding-left: 1.25rem; }
-.sos-step li { margin-bottom: 0.35rem; }
-.sos-step strong { color: var(--text); }
-.breath-circle {
-  width: 100px; height: 100px;
-  border-radius: 50%;
-  background: var(--teal3);
-  border: 2px solid var(--teal);
-  margin: 1rem auto;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.78rem;
-  color: var(--teal2);
-  font-family: sans-serif;
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.4s ease, background 0.4s ease;
-  user-select: none;
-}
-.breath-circle.in { transform: scale(1.35); background: rgba(74,154,138,0.28); }
-.breath-circle.hold { transform: scale(1.35); background: rgba(122,196,180,0.18); }
-.breath-circle.out { transform: scale(0.78); background: rgba(42,90,80,0.45); }
-.kotze-area {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--r12);
-  padding: 1.25rem;
-  margin-bottom: 0.75rem;
-}
-.kotze-area h3 { font-size: 0.92rem; color: var(--rose2); margin-bottom: 0.4rem; font-weight: normal; }
-.kotze-area p { font-size: 0.75rem; color: var(--text3); font-family: sans-serif; margin-bottom: 0.75rem; line-height: 1.6; }
-.kotze-area textarea {
-  width: 100%;
-  background: var(--bg1);
-  border: 1px solid var(--border);
-  border-radius: var(--r8);
-  padding: 0.85rem;
-  color: var(--text);
-  font-size: 0.9rem;
-  font-family: 'Georgia', serif;
-  outline: none;
-  resize: vertical;
-  min-height: 160px;
-}
-.kotze-area textarea:focus { border-color: rgba(196,122,138,0.35); }
-.sos-back {
-  background: none;
-  border: none;
-  color: var(--text3);
-  font-size: 0.78rem;
-  font-family: sans-serif;
-  cursor: pointer;
-  padding: 0.4rem 0;
-  margin-bottom: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-.sos-back:hover { color: var(--text2); }
-
-/* ============================================================
-   DETAIL MODAL
-   ============================================================ */
-.detail-overlay {
-  background: rgba(0,0,0,0.6);
-  border-radius: var(--r16);
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-  border: 1px solid var(--border2);
-}
-.detail-overlay h2 { font-size: 1rem; color: var(--gold2); margin-bottom: 1rem; font-weight: normal; }
-.detail-table { width: 100%; border-collapse: collapse; }
-.detail-table td { padding: 4px 0; vertical-align: top; font-size: 0.8rem; line-height: 1.5; }
-.detail-table td:first-child {
-  font-size: 0.7rem;
-  color: var(--text3);
-  font-family: sans-serif;
-  padding-right: 10px;
-  white-space: nowrap;
-  width: 90px;
-}
-.detail-table td:last-child { color: var(--text); }
-.detail-actions { display: flex; gap: 0.6rem; margin-top: 1.25rem; }
-.detail-actions .btn-ghost { flex: 1; text-align: center; }
-.btn-danger {
-  flex: 1;
-  padding: 0.75rem;
-  background: var(--red3);
-  color: var(--red2);
-  border: 1px solid rgba(196,80,80,0.35);
-  border-radius: var(--r8);
-  font-size: 0.82rem;
-  font-family: sans-serif;
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.15s;
-}
-.btn-danger:hover { background: rgba(196,80,80,0.3); }
-
-/* ============================================================
-   TOAST
-   ============================================================ */
-.toast {
-  background: var(--bg3);
-  color: var(--text);
-  padding: 0.6rem 1.1rem;
-  border-radius: var(--r8);
-  font-family: sans-serif;
-  font-size: 0.8rem;
-  border: 1px solid var(--border2);
-  opacity: 0;
-  transition: opacity 0.3s;
-  margin: 0 auto 0.75rem;
-  display: block;
-  text-align: center;
-  max-width: 320px;
-  pointer-events: none;
-}
-.toast.show { opacity: 1; }
-
-/* ============================================================
-   EMPTY STATE
-   ============================================================ */
-.empty {
-  text-align: center;
-  padding: 2.5rem 1rem;
-  color: var(--text3);
-  font-family: sans-serif;
-  font-size: 0.83rem;
-  line-height: 1.6;
-}
-.empty-icon { font-size: 2rem; margin-bottom: 0.5rem; }
-
-/* ============================================================
-   RESPONSIVE TWEAKS
-   ============================================================ */
-@media (max-width: 400px) {
-  .mood-grid { grid-template-columns: repeat(5, 1fr); }
-  .mood-btn { font-size: 0.62rem; padding: 0.4rem 0.1rem; }
-  .mood-em { font-size: 1rem; }
-  .content { padding: 0.75rem; }
+@media(max-width:400px){
+  .mood-btn{font-size:.62rem;padding:.4rem .1rem}
+  .mood-em{font-size:1rem}
+  .content{padding:.75rem}
+  .topbar-user{display:none}
 }
 </style>
 </head>
 <body>
-<div id="app">
 
-  <!-- ==================== CONFIG SCREEN ==================== -->
-  <div id="config-screen" style="display:none">
-    <div class="config-card">
-      <h2>⚙️ Supabase-Verbindung einrichten</h2>
-      <p>Bearbeite diese HTML-Datei und trage deine Supabase-Zugangsdaten ein. Du findest sie in deinem Supabase-Projekt unter <strong>Settings → API</strong>.</p>
+<!-- LOADING -->
+<div id="screen-loading">
+  <div class="spinner"></div>
+  <span>Innenarchitektur lädt...</span>
+</div>
 
-      <div class="config-step">
-        <strong>1. Supabase-Projekt erstellen</strong><br>
-        Gehe auf <code>supabase.com</code>, erstelle ein kostenloses Projekt.
-      </div>
-      <div class="config-step">
-        <strong>2. Datenbank-Tabellen anlegen</strong><br>
-        Führe das SQL-Schema unter <strong>SQL Editor</strong> in Supabase aus. Das Schema findest du als Kommentar am Ende dieser Datei.
-      </div>
-      <div class="config-step">
-        <strong>3. Zugangsdaten eintragen</strong><br>
-        Öffne diese Datei in einem Texteditor und ersetze <code>DEINE_SUPABASE_URL</code> und <code>DEIN_SUPABASE_ANON_KEY</code> mit deinen echten Werten.
-      </div>
-      <div class="config-step">
-        <strong>4. Auf GitHub Pages hosten</strong><br>
-        Repository erstellen → Datei hochladen → Settings → Pages → Branch: main → Speichern. Fertig!
-      </div>
+<!-- AUTH -->
+<div id="screen-auth">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <h1>Innenarchitektur</h1>
+      <p>Dein Traumatagebuch</p>
+    </div>
+    <div class="auth-err" id="auth-err"></div>
+    <div class="auth-ok" id="auth-ok"></div>
+
+    <div id="form-login">
+      <div class="fg"><label>E-Mail</label><input type="email" id="l-email" placeholder="deine@mail.de" autocomplete="email"></div>
+      <div class="fg"><label>Passwort</label><input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn-acc" id="btn-login" onclick="doLogin()">Einloggen</button>
+      <div class="auth-sw" style="margin-top:.75rem">Neu hier? <a onclick="switchForm('register')">Konto erstellen</a></div>
+      <div class="auth-sw" style="margin-top:.35rem"><a onclick="switchForm('reset')">Passwort vergessen?</a></div>
+    </div>
+
+    <div id="form-register" style="display:none">
+      <div class="fg"><label>E-Mail</label><input type="email" id="r-email" placeholder="deine@mail.de"></div>
+      <div class="fg"><label>Passwort (min. 8 Zeichen)</label><input type="password" id="r-pass" placeholder="Sicheres Passwort"></div>
+      <div class="fg"><label>Passwort wiederholen</label><input type="password" id="r-pass2" placeholder="Bestätigen"></div>
+      <button class="btn-acc" id="btn-reg" onclick="doRegister()">Konto erstellen</button>
+      <div class="auth-sw" style="margin-top:.75rem">Schon ein Konto? <a onclick="switchForm('login')">Einloggen</a></div>
+    </div>
+
+    <div id="form-reset" style="display:none">
+      <p style="font-size:.82rem;color:var(--text2);font-family:sans-serif;margin-bottom:1rem;line-height:1.6">Gib deine E-Mail-Adresse ein – du erhältst einen Reset-Link.</p>
+      <div class="fg"><label>E-Mail</label><input type="email" id="reset-email" placeholder="deine@mail.de"></div>
+      <button class="btn-acc" onclick="doReset()">Reset-Link senden</button>
+      <div class="auth-sw" style="margin-top:.75rem"><a onclick="switchForm('login')">← Zurück</a></div>
+    </div>
+
+    <div class="auth-info">🔒 Deine Daten werden verschlüsselt in einer persönlichen Supabase-Datenbank gespeichert. Nur du hast Zugriff.</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="screen-main">
+  <div class="topbar">
+    <div class="topbar-brand">
+      Innenarchitektur
+      <span class="sync-dot" id="sync-dot" title="Sync-Status"></span>
+    </div>
+    <div class="topbar-right">
+      <button class="sos-btn" onclick="openSOS()">⚠ Notfall</button>
+      <span class="topbar-user" id="nav-user"></span>
+      <button class="btn-sm" onclick="doLogout()">Abmelden</button>
     </div>
   </div>
 
-  <!-- ==================== LOADING ==================== -->
-  <div id="loading-screen">
-    <div class="spinner"></div>
-    <span>Wird geladen...</span>
+  <div class="tabnav">
+    <button class="tab on" data-t="j" onclick="showTab('j')">Journal</button>
+    <button class="tab" data-t="d" onclick="showTab('d')">Träume</button>
+    <button class="tab" data-t="p" onclick="showTab('p')">Anteile</button>
+    <button class="tab" data-t="e" onclick="showTab('e')">Einträge</button>
+    <button class="tab" data-t="tr" onclick="showTab('tr')">Trigger</button>
+    <button class="tab" data-t="st" onclick="showTab('st')">Statistik</button>
   </div>
 
-  <!-- ==================== AUTH SCREEN ==================== -->
-  <div id="auth-screen" style="display:none">
-    <div class="auth-card">
-      <div class="auth-logo">
-        <h1>Innenarchitektur</h1>
-        <p>Dein Traumatagebuch</p>
-      </div>
-      <div class="auth-err" id="auth-err"></div>
+  <div class="content">
+    <span class="toast" id="toast"></span>
+    <div id="detail-area"></div>
 
-      <!-- Login -->
-      <div id="login-form">
-        <div class="fg"><label>E-Mail</label><input type="email" id="l-email" placeholder="deine@mail.de" autocomplete="email"></div>
-        <div class="fg"><label>Passwort</label><input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"></div>
-        <button class="btn-gold" id="login-btn" onclick="doLogin()">Einloggen</button>
-        <div class="auth-sw">Noch kein Konto? <a onclick="switchForm('register')">Registrieren</a></div>
+    <!-- SOS -->
+    <div class="sos-wrap" id="sos-wrap">
+      <button class="sos-back" onclick="closeSOS()">← Zurück</button>
+      <div class="sos-hero">
+        <h2>Du bist gerade in einer schwierigen Situation</h2>
+        <p>Das geht vorbei. Wähle eine Methode, die dir jetzt helfen kann.</p>
       </div>
-
-      <!-- Register -->
-      <div id="register-form" style="display:none">
-        <div class="fg"><label>E-Mail</label><input type="email" id="r-email" placeholder="deine@mail.de"></div>
-        <div class="fg"><label>Passwort (min. 8 Zeichen)</label><input type="password" id="r-pass" placeholder="Sicheres Passwort"></div>
-        <div class="fg"><label>Passwort wiederholen</label><input type="password" id="r-pass2" placeholder="Bestätigen"></div>
-        <button class="btn-gold" id="reg-btn" onclick="doRegister()">Konto erstellen</button>
-        <div class="auth-sw">Schon ein Konto? <a onclick="switchForm('login')">Einloggen</a></div>
+      <div class="sos-grid">
+        <button class="sos-method" onclick="sosShow('breath')"><div class="sos-icon">🫁</div><div class="sos-title">Atemübung</div><div class="sos-sub">4-7-8 Nervensystem beruhigen</div></button>
+        <button class="sos-method" onclick="sosShow('grounding')"><div class="sos-icon">🌍</div><div class="sos-title">Grounding</div><div class="sos-sub">5-4-3-2-1 im Hier ankommen</div></button>
+        <button class="sos-method" onclick="sosShow('tresor')"><div class="sos-icon">🔒</div><div class="sos-title">Tresormethode</div><div class="sos-sub">Belastung einschließen</div></button>
+        <button class="sos-method" onclick="sosShow('safe')"><div class="sos-icon">🏡</div><div class="sos-title">Sicherer Ort</div><div class="sos-sub">Imaginative Stabilisierung</div></button>
+        <button class="sos-method" onclick="sosShow('window')"><div class="sos-icon">🪟</div><div class="sos-title">Toleranzfenster</div><div class="sos-sub">Zurück in die Zone</div></button>
+        <button class="sos-method" onclick="sosShow('kotze')"><div class="sos-icon">🌊</div><div class="sos-title">Alles raus</div><div class="sos-sub">Auskotzseite – ungespeichert</div></button>
       </div>
-
-      <!-- Reset -->
-      <div id="reset-form" style="display:none">
-        <p style="font-size:0.82rem;color:var(--text2);font-family:sans-serif;margin-bottom:1rem;line-height:1.6">Gib deine E-Mail-Adresse ein. Du erhältst einen Link zum Zurücksetzen deines Passworts.</p>
-        <div class="fg"><label>E-Mail</label><input type="email" id="reset-email" placeholder="deine@mail.de"></div>
-        <button class="btn-gold" onclick="doReset()">Link zusenden</button>
-        <div class="auth-sw"><a onclick="switchForm('login')">← Zurück zum Login</a></div>
-      </div>
-
-      <div style="text-align:center;margin-top:0.75rem" id="forgot-link">
-        <span class="auth-sw"><a onclick="switchForm('reset')">Passwort vergessen?</a></span>
-      </div>
-
-      <div class="auth-info">
-        🔒 Deine Daten werden sicher in deiner persönlichen Supabase-Datenbank gespeichert. Nur du hast Zugriff.
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== MAIN APP ==================== -->
-  <div id="main-screen">
-
-    <div class="topbar">
-      <div class="topbar-brand">Innenarchitektur <span class="sync-dot" id="sync-dot" title="Synchronisiert"></span></div>
-      <div class="topbar-right">
-        <button class="sos-btn" onclick="openSOS()">⚠ Notfall</button>
-        <span class="topbar-user" id="nav-user"></span>
-        <button class="btn-sm" onclick="doLogout()">Abmelden</button>
-      </div>
+      <div id="sos-content"></div>
     </div>
 
-    <div class="tabnav">
-      <button class="tab on" data-t="j" onclick="showTab('j')">Journal</button>
-      <button class="tab" data-t="d" onclick="showTab('d')">Träume</button>
-      <button class="tab" data-t="p" onclick="showTab('p')">Innenanteile</button>
-      <button class="tab" data-t="e" onclick="showTab('e')">Einträge</button>
-      <button class="tab" data-t="tr" onclick="showTab('tr')">Trigger</button>
-      <button class="tab" data-t="st" onclick="showTab('st')">Statistik</button>
+    <!-- JOURNAL -->
+    <div class="panel on" id="p-j">
+      <div class="card">
+        <div class="card-hd"><div><div class="card-title">Heutiger Eintrag</div><div class="card-sub" id="today-date"></div></div></div>
+        <div class="sec-label"><span class="sec-dot"></span>Wie geht es dir gerade?</div>
+        <div class="mood-grid">
+          <button class="mood-btn" onclick="selMood(this,'sicher')"><span class="mood-em">🌿</span>Sicher</button>
+          <button class="mood-btn" onclick="selMood(this,'ruhig')"><span class="mood-em">🌊</span>Ruhig</button>
+          <button class="mood-btn" onclick="selMood(this,'traurig')"><span class="mood-em">💧</span>Traurig</button>
+          <button class="mood-btn" onclick="selMood(this,'ängstlich')"><span class="mood-em">🌪️</span>Ängstlich</button>
+          <button class="mood-btn" onclick="selMood(this,'wütend')"><span class="mood-em">🔥</span>Wütend</button>
+          <button class="mood-btn" onclick="selMood(this,'getriggert')"><span class="mood-em">⚡</span>Getriggert</button>
+          <button class="mood-btn" onclick="selMood(this,'taub')"><span class="mood-em">🌫️</span>Taub</button>
+          <button class="mood-btn" onclick="selMood(this,'überwältigt')"><span class="mood-em">🌀</span>Überwältigt</button>
+          <button class="mood-btn" onclick="selMood(this,'dankbar')"><span class="mood-em">☀️</span>Dankbar</button>
+          <button class="mood-btn" onclick="selMood(this,'erschöpft')"><span class="mood-em">🌙</span>Erschöpft</button>
+        </div>
+        <div class="fg-d"><label>Intensität des Erlebens (0–10)</label><div class="scale-row"><input type="range" min="0" max="10" step="1" value="5" id="j-int" oninput="sv('j-int-v',this.value)"><span class="scale-val" id="j-int-v">5</span></div><div class="scale-labs"><span>0 – kaum</span><span>10 – extrem</span></div></div>
+        <hr class="divider">
+        <div class="sec-label"><span class="sec-dot"></span>Körper & Befinden</div>
+        <div class="fg-d"><label>Körperliche Symptome & Empfindungen</label><textarea id="j-body" placeholder="Müdigkeit, Enge in der Brust, Schwere, Kribbeln..."></textarea></div>
+        <div class="fg-d"><label>Schlafqualität letzte Nacht (0–10)</label><div class="scale-row"><input type="range" min="0" max="10" step="1" value="5" id="j-sl" oninput="sv('j-sl-v',this.value)"><span class="scale-val" id="j-sl-v">5</span></div><div class="scale-labs"><span>sehr schlecht</span><span>sehr gut</span></div></div>
+        <div class="fg-d"><label>Energie-Level (0–10)</label><div class="scale-row"><input type="range" min="0" max="10" step="1" value="5" id="j-en" oninput="sv('j-en-v',this.value)"><span class="scale-val" id="j-en-v">5</span></div><div class="scale-labs"><span>erschöpft</span><span>voller Energie</span></div></div>
+        <hr class="divider">
+        <div class="sec-label"><span class="sec-dot"></span>Was ist passiert?</div>
+        <div class="fg-d"><label>Ereignisse des Tages</label><textarea id="j-ev" placeholder="Was habe ich erlebt?"></textarea></div>
+        <div class="fg-d"><label>Kontakte & Menschen (kommagetrennt)</label><input type="text" id="j-co" placeholder="z.B. Mama, Therapeutin, Kollegin B."></div>
+        <div class="fg-d"><label>Aktivitäten</label><textarea id="j-ac" placeholder="Was habe ich getan?" style="min-height:55px"></textarea></div>
+        <hr class="divider">
+        <div class="sec-label"><span class="sec-dot"></span>Innenwelt</div>
+        <div class="fg-d"><label>Gedanken & was mich beschäftigt</label><textarea id="j-th" placeholder="Wiederkehrende Gedanken, Sorgen, schöne Momente..."></textarea></div>
+        <div class="fg-d"><label>Gab es Trigger? Was hat mich destabilisiert?</label><textarea id="j-tr" placeholder="Worte, Situationen, Personen, Bilder, Geräusche..."></textarea></div>
+        <div class="fg-d"><label>Bewältigungsstrategien die ich genutzt habe</label><textarea id="j-cp" placeholder="Atemübung, Grounding, Safe Place, Musik..." style="min-height:55px"></textarea></div>
+        <hr class="divider">
+        <div class="sec-label"><span class="sec-dot"></span>Selbstfürsorge</div>
+        <div class="fg-d"><label>Was habe ich gegessen / getrunken?</label><textarea id="j-fo" placeholder="Mahlzeiten, ob ich genug Wasser getrunken habe..." style="min-height:55px"></textarea></div>
+        <div class="fg-d"><label>Bewegung / Körperpflege</label><input type="text" id="j-sc" placeholder="Spaziergang, geduscht, Yoga..."></div>
+        <hr class="divider">
+        <div class="sec-label"><span class="sec-dot"></span>Reflexion</div>
+        <div class="refl"><q>Was brauche ich gerade am meisten – und kann ich mir das selbst geben?</q><textarea class="fg-d" id="j-r1" placeholder="Deine Antwort..." style="width:100%;background:var(--bg1);border:1px solid var(--border);border-radius:var(--r8);padding:.65rem .85rem;color:var(--text);font-size:.83rem;font-family:Georgia,serif;outline:none;resize:vertical;min-height:60px;margin-top:.25rem"></textarea></div>
+        <div class="refl"><q>Welcher innere Anteil war heute besonders laut oder präsent?</q><textarea class="fg-d" id="j-r2" placeholder="Deine Antwort..." style="width:100%;background:var(--bg1);border:1px solid var(--border);border-radius:var(--r8);padding:.65rem .85rem;color:var(--text);font-size:.83rem;font-family:Georgia,serif;outline:none;resize:vertical;min-height:60px;margin-top:.25rem"></textarea></div>
+        <div class="refl"><q>Was hat mir heute gut getan – auch wenn es klein war?</q><textarea class="fg-d" id="j-r3" placeholder="Deine Antwort..." style="width:100%;background:var(--bg1);border:1px solid var(--border);border-radius:var(--r8);padding:.65rem .85rem;color:var(--text);font-size:.83rem;font-family:Georgia,serif;outline:none;resize:vertical;min-height:60px;margin-top:.25rem"></textarea></div>
+        <div class="fg-d" style="margin-top:.85rem"><label>Grounding-Check: Wie präsent und geerdet fühle ich mich? (0–10)</label><div class="scale-row"><input type="range" min="0" max="10" step="1" value="5" id="j-gd" oninput="sv('j-gd-v',this.value)"><span class="scale-val" id="j-gd-v">5</span></div><div class="scale-labs"><span>gar nicht geerdet</span><span>vollständig präsent</span></div></div>
+      </div>
+      <div class="save-bar">
+        <button class="btn-ghost" onclick="clearJ()">Leeren</button>
+        <button class="btn-main" id="btn-save-j" onclick="saveJ()">Eintrag speichern</button>
+      </div>
     </div>
 
-    <div class="content">
-      <span class="toast" id="toast"></span>
-      <div id="detail-area"></div>
-
-      <!-- ========== SOS ========== -->
-      <div class="sos-panel" id="sos-panel">
-        <button class="sos-back" onclick="closeSOS()">← Zurück</button>
-        <div class="sos-hero">
-          <h2>Du bist gerade in einer schwierigen Situation</h2>
-          <p>Das geht vorbei. Wähle eine Methode, die dir jetzt helfen kann.</p>
-        </div>
-        <div class="sos-grid">
-          <div class="sos-method" onclick="sosShow('breath')"><div class="sos-method-icon">🫁</div><div class="sos-method-title">Atemübung</div><div class="sos-method-sub">4-7-8 Nervensystem beruhigen</div></div>
-          <div class="sos-method" onclick="sosShow('grounding')"><div class="sos-method-icon">🌍</div><div class="sos-method-title">Grounding</div><div class="sos-method-sub">5-4-3-2-1 im Hier ankommen</div></div>
-          <div class="sos-method" onclick="sosShow('tresor')"><div class="sos-method-icon">🔒</div><div class="sos-method-title">Tresormethode</div><div class="sos-method-sub">Belastung einschließen</div></div>
-          <div class="sos-method" onclick="sosShow('safe')"><div class="sos-method-icon">🏡</div><div class="sos-method-title">Sicherer Ort</div><div class="sos-method-sub">Imaginative Stabilisierung</div></div>
-          <div class="sos-method" onclick="sosShow('window')"><div class="sos-method-icon">🪟</div><div class="sos-method-title">Toleranzfenster</div><div class="sos-method-sub">Zurück in die Zone</div></div>
-          <div class="sos-method" onclick="sosShow('kotze')"><div class="sos-method-icon">🌊</div><div class="sos-method-title">Alles raus</div><div class="sos-method-sub">Auskotzseite – ungespeichert</div></div>
-        </div>
-        <div id="sos-content"></div>
-      </div>
-
-      <!-- ========== JOURNAL ========== -->
-      <div class="panel on" id="p-j">
-        <div class="card">
-          <div class="card-hd">
-            <div><div class="card-title">Heutiger Eintrag</div><div class="card-sub" id="today-date"></div></div>
+    <!-- TRÄUME -->
+    <div class="panel" id="p-d">
+      <div class="card">
+        <div class="card-hd"><div><div class="card-title" style="color:var(--vio2)">Traumeintrag</div><div class="card-sub" id="dream-date"></div></div></div>
+        <div class="sec-label"><span class="sec-dot"></span>Der Traum</div>
+        <div class="fg-d"><label>Was habe ich geträumt?</label><textarea id="dr-content" placeholder="Lass den Traum fließen – Bilder, Gefühle, Fragmente, Personen, Orte..." style="min-height:130px"></textarea></div>
+        <div class="fg-d"><label>Schlüsselbilder / Symbole</label><input type="text" id="dr-sym" placeholder="z.B. Wasser, verfallenes Haus, fremde Person, Verfolgung..."></div>
+        <div class="fg-d"><label>Gefühle im Traum</label><input type="text" id="dr-feel" placeholder="z.B. Angst, Sehnsucht, Erleichterung, Freude..."></div>
+        <div class="fg-d"><label>Gefühle beim Aufwachen</label><input type="text" id="dr-wake" placeholder="Das erste Gefühl nach dem Aufwachen?"></div>
+        <hr class="divider">
+        <div class="sec-label"><span class="sec-dot"></span>Kontext & Qualität</div>
+        <div class="fg-d"><label>Wie klar ist die Erinnerung? (0–10)</label><div class="scale-row"><input type="range" min="0" max="10" step="1" value="5" id="dr-cl" oninput="sv('dr-cl-v',this.value)"><span class="scale-val" id="dr-cl-v">5</span></div></div>
+        <div class="fg-d"><label>Wie intensiv / emotional war der Traum? (0–10)</label><div class="scale-row"><input type="range" min="0" max="10" step="1" value="5" id="dr-in" oninput="sv('dr-in-v',this.value)"><span class="scale-val" id="dr-in-v">5</span></div></div>
+        <div class="fg-d"><label>Schlafqualität der vergangenen Nacht (0–10)</label><div class="scale-row"><input type="range" min="0" max="10" step="1" value="5" id="dr-sl" oninput="sv('dr-sl-v',this.value)"><span class="scale-val" id="dr-sl-v">5</span></div></div>
+        <div class="fg-d"><label>Ungefähre Uhrzeit des Aufwachens</label><input type="text" id="dr-time" placeholder="z.B. 3:00 Uhr, 6:30 Uhr..."></div>
+        <div class="fg-d"><label>War es ein Albtraum?</label>
+          <div style="display:flex;gap:.5rem;margin-top:.3rem">
+            <button class="mood-btn" id="dr-nm-y" onclick="setNightmare(true)" style="flex:1;padding:.5rem">Ja</button>
+            <button class="mood-btn on" id="dr-nm-n" onclick="setNightmare(false)" style="flex:1;padding:.5rem">Nein</button>
           </div>
+        </div>
+        <hr class="divider">
+        <div class="sec-label"><span class="sec-dot"></span>Eigene Interpretation</div>
+        <div class="fg-d"><label>Was könnte dieser Traum bedeuten?</label><textarea id="dr-interp" placeholder="Was sagt dir dieser Traum? Verbindungen zu deinem Alltag?"></textarea></div>
+        <div class="fg-d"><label>Verbindung zu Therapiethemen / inneren Anteilen?</label><textarea id="dr-conn" placeholder="Welcher Anteil könnte hier gesprochen haben?" style="min-height:60px"></textarea></div>
+      </div>
+      <div class="save-bar">
+        <button class="btn-ghost" onclick="clearD()">Leeren</button>
+        <button class="btn-vio" id="btn-save-d" onclick="saveDream()">Traum speichern</button>
+      </div>
+    </div>
 
-          <div class="sec-label"><span class="sec-dot"></span>Wie geht es dir gerade?</div>
-          <div class="mood-grid">
-            <div class="mood-btn" onclick="selMood(this,'sicher')"><span class="mood-em">🌿</span>Sicher</div>
-            <div class="mood-btn" onclick="selMood(this,'ruhig')"><span class="mood-em">🌊</span>Ruhig</div>
-            <div class="mood-btn" onclick="selMood(this,'traurig')"><span class="mood-em">💧</span>Traurig</div>
-            <div class="mood-btn" onclick="selMood(this,'ängstlich')"><span class="mood-em">🌪️</span>Ängstlich</div>
-            <div class="mood-btn" onclick="selMood(this,'wütend')"><span class="mood-em">🔥</span>Wütend</div>
-            <div class="mood-btn" onclick="selMood(this,'getriggert')"><span class="mood-em">⚡</span>Getriggert</div>
-            <div class="mood-btn" onclick="selMood(this,'taub')"><span class="mood-em">🌫️</span>Taub</div>
-            <div class="mood-btn" onclick="selMood(this,'überwältigt')"><span class="mood-em">🌀</span>Überwältigt</div>
-            <div class="mood-btn" onclick="selMood(this,'dankbar')"><span class="mood-em">☀️</span>Dankbar</div>
-            <div class="mood-btn" onclick="selMood(this,'erschöpft')"><span class="mood-em">🌙</span>Erschöpft</div>
+    <!-- ANTEILE -->
+    <div class="panel" id="p-p">
+      <div class="card">
+        <div class="card-hd">
+          <div><div class="card-title" style="color:var(--ros2)">Meine inneren Anteile</div><div class="card-sub">IFS – Internal Family Systems</div></div>
+          <button class="btn-ghost" style="font-size:.75rem;padding:.4rem .8rem" onclick="togglePartForm()">+ Hinzufügen</button>
+        </div>
+        <div id="add-part-form" style="display:none" class="inline-form">
+          <div class="fg-d"><label>Name des Anteils</label><input type="text" id="pn" placeholder="z.B. Das kleine Kind, Der Kritiker, Die Kämpferin..."></div>
+          <div class="fg-d"><label>Emoji / Symbol</label><input type="text" id="pe" placeholder="🌱 🔥 💙 🌙 🌊"></div>
+          <div class="fg-d"><label>Rolle – was dieser Anteil tut</label><textarea id="pr" placeholder="Schützt mich durch..." style="min-height:60px"></textarea></div>
+          <div class="fg-d" style="margin:0"><label>Was er / sie braucht</label><input type="text" id="pnd" placeholder="z.B. Sicherheit, Anerkennung, Gehört werden..."></div>
+          <div style="display:flex;gap:.6rem;margin-top:.85rem">
+            <button class="btn-ghost" onclick="togglePartForm()">Abbrechen</button>
+            <button class="btn-main" onclick="savePart()" style="font-size:.85rem;padding:.7rem">Speichern</button>
           </div>
-
-          <div class="fg-d"><label>Intensität des Erlebens (0–10)</label><div class="scale-row"><input type="range" min="0" max="10" step="1" value="5" id="j-int" oninput="sv('j-int-v',this.value)"><span class="scale-val" id="j-int-v">5</span></div><div class="scale-labs"><span>0 – kaum</span><span>10 – extrem</span></div></div>
-
-          <hr class="divider">
-          <div class="sec-label"><span class="sec-dot"></span>Körper & Befinden</div>
-          <div class="fg-d"><label>Körperliche Symptome & Empfindungen</label><textarea id="j-body" placeholder="Müdigkeit, Enge in der Brust, Schwere, Kribbeln, Schmerzen..."></textarea></div>
-          <div class="fg-d"><label>Schlafqualität letzte Nacht (0–10)</label><div class="scale-row"><input type="range" min="0" max="10" step="1" value="5" id="j-sl" oninput="sv('j-sl-v',this.value)"><span class="scale-val" id="j-sl-v">5</span></div><div class="scale-labs"><span>sehr schlecht</span><span>sehr gut</span></div></div>
-          <div class="fg-d"><label>Energie-Level (0–10)</label><div class="scale-row"><input type="range" min="0" max="10" step="1" value="5" id="j-en" oninput="sv('j-en-v',this.value)"><span class="scale-val" id="j-en-v">5</span></div><div class="scale-labs"><span>erschöpft</span><span>voller Energie</span></div></div>
-
-          <hr class="divider">
-          <div class="sec-label"><span class="sec-dot"></span>Was ist passiert?</div>
-          <div class="fg-d"><label>Ereignisse des Tages</label><textarea id="j-ev" placeholder="Was habe ich erlebt? Was ist passiert?"></textarea></div>
-          <div class="fg-d"><label>Kontakte & Menschen (kommagetrennt)</label><input type="text" id="j-co" placeholder="z.B. Mama, Therapeutin, Kollegin B."></div>
-          <div class="fg-d"><label>Aktivitäten</label><textarea id="j-ac" placeholder="Was habe ich getan?" style="min-height:55px"></textarea></div>
-
-          <hr class="divider">
-          <div class="sec-label"><span class="sec-dot"></span>Innenwelt</div>
-          <div class="fg-d"><label>Gedanken & was mich beschäftigt</label><textarea id="j-th" placeholder="Wiederkehrende Gedanken, Sorgen, schöne Momente..."></textarea></div>
-          <div class="fg-d"><label>Gab es Trigger? Was hat mich destabilisiert?</label><textarea id="j-tr" placeholder="Worte, Situationen, Personen, Bilder, Geräusche..."></textarea></div>
-          <div class="fg-d"><label>Welche Bewältigungsstrategien habe ich genutzt?</label><textarea id="j-cp" placeholder="Atemübung, Grounding, Safe Place, Musik..." style="min-height:55px"></textarea></div>
-
-          <hr class="divider">
-          <div class="sec-label"><span class="sec-dot"></span>Selbstfürsorge</div>
-          <div class="fg-d"><label>Was habe ich gegessen / getrunken?</label><textarea id="j-fo" placeholder="Mahlzeiten, ob ich genug getrunken habe..." style="min-height:55px"></textarea></div>
-          <div class="fg-d"><label>Bewegung / Körperpflege</label><input type="text" id="j-sc" placeholder="Spaziergang, geduscht, Yoga..."></div>
-
-          <hr class="divider">
-          <div class="sec-label"><span class="sec-dot"></span>Reflexion</div>
-          <div class="refl"><q>Was brauche ich gerade am meisten – und kann ich mir das selbst geben?</q><div class="fg-d" style="margin:0"><textarea id="j-r1" placeholder="Deine Antwort..."></textarea></div></div>
-          <div class="refl"><q>Welcher innere Anteil war heute besonders laut oder präsent?</q><div class="fg-d" style="margin:0"><textarea id="j-r2" placeholder="Deine Antwort..."></textarea></div></div>
-          <div class="refl"><q>Was hat mir heute gut getan – auch wenn es klein war?</q><div class="fg-d" style="margin:0"><textarea id="j-r3" placeholder="Deine Antwort..."></textarea></div></div>
-          <div class="fg-d" style="margin-top:0.85rem"><label>Grounding-Check: Wie präsent und geerdet fühle ich mich gerade? (0–10)</label><div class="scale-row"><input type="range" min="0" max="10" step="1" value="5" id="j-gd" oninput="sv('j-gd-v',this.value)"><span class="scale-val" id="j-gd-v">5</span></div><div class="scale-labs"><span>gar nicht geerdet</span><span>vollständig präsent</span></div></div>
         </div>
-        <div class="save-bar">
-          <button class="btn-ghost" onclick="clearJ()">Leeren</button>
-          <button class="btn-main" id="j-save-btn" onclick="saveJ()">Eintrag speichern</button>
-        </div>
+        <div id="parts-list"></div>
       </div>
-
-      <!-- ========== TRÄUME ========== -->
-      <div class="panel" id="p-d">
-        <div class="card">
-          <div class="card-hd"><div><div class="card-title">Traumeintrag</div><div class="card-sub" id="dream-date"></div></div></div>
-
-          <div class="sec-label"><span class="sec-dot"></span>Der Traum</div>
-          <div class="fg-d"><label>Was habe ich geträumt?</label><textarea id="dr-content" placeholder="Lass den Traum fließen – Bilder, Gefühle, Fragmente, Personen, Orte..." style="min-height:130px"></textarea></div>
-          <div class="fg-d"><label>Schlüsselbilder / Symbole</label><input type="text" id="dr-sym" placeholder="z.B. Wasser, verfallenes Haus, fremde Person, Verfolgung..."></div>
-          <div class="fg-d"><label>Gefühle im Traum</label><input type="text" id="dr-feel" placeholder="z.B. Angst, Sehnsucht, Erleichterung, Freude..."></div>
-          <div class="fg-d"><label>Gefühle beim Aufwachen</label><input type="text" id="dr-wake" placeholder="Das erste Gefühl nach dem Aufwachen?"></div>
-
-          <hr class="divider">
-          <div class="sec-label"><span class="sec-dot"></span>Kontext & Qualität</div>
-          <div class="fg-d"><label>Wie klar ist die Erinnerung? (0–10)</label><div class="scale-row"><input type="range" min="0" max="10" step="1" value="5" id="dr-cl" oninput="sv('dr-cl-v',this.value)"><span class="scale-val" id="dr-cl-v">5</span></div></div>
-          <div class="fg-d"><label>Wie intensiv / emotional war der Traum? (0–10)</label><div class="scale-row"><input type="range" min="0" max="10" step="1" value="5" id="dr-in" oninput="sv('dr-in-v',this.value)"><span class="scale-val" id="dr-in-v">5</span></div></div>
-          <div class="fg-d"><label>Schlafqualität der vergangenen Nacht (0–10)</label><div class="scale-row"><input type="range" min="0" max="10" step="1" value="5" id="dr-sl" oninput="sv('dr-sl-v',this.value)"><span class="scale-val" id="dr-sl-v">5</span></div></div>
-          <div class="fg-d"><label>Ungefähre Uhrzeit des Aufwachens</label><input type="text" id="dr-time" placeholder="z.B. 3:00 Uhr, 6:30 Uhr, spontan..."></div>
-          <div class="fg-d"><label>War es ein Albtraum?</label>
-            <div style="display:flex;gap:0.5rem;margin-top:0.3rem">
-              <button class="mood-btn" id="dr-nm-y" onclick="setNightmare(true)" style="flex:1;padding:0.5rem">Ja</button>
-              <button class="mood-btn on" id="dr-nm-n" onclick="setNightmare(false)" style="flex:1;padding:0.5rem">Nein</button>
-            </div>
-          </div>
-
-          <hr class="divider">
-          <div class="sec-label"><span class="sec-dot"></span>Eigene Interpretation</div>
-          <div class="fg-d"><label>Was könnte dieser Traum bedeuten?</label><textarea id="dr-interp" placeholder="Was sagt dir dieser Traum? Verbindungen zu deinem Alltag?"></textarea></div>
-          <div class="fg-d"><label>Verbindung zu Therapiethemen / inneren Anteilen?</label><textarea id="dr-conn" placeholder="Welcher Anteil könnte hier gesprochen haben?" style="min-height:60px"></textarea></div>
-        </div>
-        <div class="save-bar">
-          <button class="btn-ghost" onclick="clearD()">Leeren</button>
-          <button class="btn-violet" id="d-save-btn" onclick="saveDream()">Traum speichern</button>
-        </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:1rem;color:var(--ros2)">Heutige Anteile-Arbeit</div>
+        <div class="fg-d"><label>Welcher Anteil war heute aktiv?</label><input type="text" id="pw-part" placeholder="Name des Anteils..."></div>
+        <div class="fg-d"><label>Was wollte er / sie mitteilen?</label><textarea id="pw-msg" placeholder="Was hat dieser Anteil kommuniziert?"></textarea></div>
+        <div class="fg-d"><label>Wie habe ich darauf reagiert?</label><textarea id="pw-resp" placeholder="Mit Mitgefühl, Verständnis, Grenzen setzen..." style="min-height:60px"></textarea></div>
+        <div class="fg-d" style="margin:0"><label>Was braucht dieser Anteil von mir?</label><textarea id="pw-need" placeholder="Sicherheit, Gehört werden, Raum..." style="min-height:55px"></textarea></div>
+        <button class="btn-main" onclick="savePartsWork()" style="width:100%;margin-top:.85rem">Anteile-Arbeit speichern</button>
       </div>
+    </div>
 
-      <!-- ========== INNENANTEILE ========== -->
-      <div class="panel" id="p-p">
-        <div class="card">
-          <div class="card-hd">
-            <div><div class="card-title">Meine inneren Anteile</div><div class="card-sub">IFS – Internal Family Systems</div></div>
-            <button class="btn-ghost" style="font-size:0.75rem;padding:0.4rem 0.8rem" onclick="togglePartForm()">+ Hinzufügen</button>
-          </div>
-          <div id="add-part-form" style="display:none" class="inline-form">
-            <div class="fg-d"><label>Name des Anteils</label><input type="text" id="pn" placeholder="z.B. Das kleine Kind, Der Kritiker, Die Kämpferin..."></div>
-            <div class="fg-d"><label>Emoji / Symbol</label><input type="text" id="pe" placeholder="🌱 🔥 💙 🌙 🌊 🗡️"></div>
-            <div class="fg-d"><label>Rolle – was dieser Anteil tut</label><textarea id="pr" placeholder="Schützt mich durch..." style="min-height:60px"></textarea></div>
-            <div class="fg-d" style="margin:0"><label>Was er / sie braucht</label><input type="text" id="pnd" placeholder="z.B. Sicherheit, Anerkennung, Gehört werden..."></div>
-            <div style="display:flex;gap:0.6rem;margin-top:0.85rem">
-              <button class="btn-ghost" onclick="togglePartForm()">Abbrechen</button>
-              <button class="btn-main" onclick="savePart()" style="font-size:0.85rem;padding:0.7rem">Speichern</button>
-            </div>
-          </div>
-          <div id="parts-list"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-title" style="margin-bottom:1rem">Heutige Anteile-Arbeit</div>
-          <div class="fg-d"><label>Welcher Anteil war heute aktiv?</label><input type="text" id="pw-part" placeholder="Name des Anteils..."></div>
-          <div class="fg-d"><label>Was wollte er / sie mitteilen?</label><textarea id="pw-msg" placeholder="Was hat dieser Anteil kommuniziert?"></textarea></div>
-          <div class="fg-d"><label>Wie habe ich darauf reagiert?</label><textarea id="pw-resp" placeholder="Mit Mitgefühl, Verständnis, Grenzen setzen..." style="min-height:60px"></textarea></div>
-          <div class="fg-d" style="margin:0"><label>Was braucht dieser Anteil von mir?</label><textarea id="pw-need" placeholder="Sicherheit, Gehört werden, Raum..." style="min-height:55px"></textarea></div>
-          <button class="btn-main" onclick="savePartsWork()" style="width:100%;margin-top:0.85rem">Anteile-Arbeit speichern</button>
-        </div>
+    <!-- EINTRÄGE -->
+    <div class="panel" id="p-e">
+      <div class="filter-row">
+        <button class="filter-btn on" id="ef-j" onclick="filterEntries('j')">Journal</button>
+        <button class="filter-btn" id="ef-d" onclick="filterEntries('d')">Träume</button>
+        <button class="filter-btn" id="ef-p" onclick="filterEntries('p')">Anteile-Arbeit</button>
       </div>
+      <div id="entries-list"></div>
+    </div>
 
-      <!-- ========== EINTRÄGE ========== -->
-      <div class="panel" id="p-e">
-        <div class="entry-filter">
-          <button class="filter-btn on" id="ef-j" onclick="filterEntries('j')">Journal-Einträge</button>
-          <button class="filter-btn" id="ef-d" onclick="filterEntries('d')">Traumeinträge</button>
-          <button class="filter-btn" id="ef-p" onclick="filterEntries('p')">Anteile-Arbeit</button>
-        </div>
-        <div id="entries-list"></div>
+    <!-- TRIGGER -->
+    <div class="panel" id="p-tr">
+      <div class="card"><div class="card-hd"><div><div class="card-title">Trigger-Übersicht</div><div class="card-sub">Automatisch aus deinen Einträgen gesammelt</div></div></div><div id="tr-list"></div></div>
+      <div class="card"><div class="card-title" style="margin-bottom:.5rem">Kontakt-Korrelation</div><div class="card-sub" style="margin-bottom:1rem">Bei wem war ich wie oft getriggert?</div><div id="tr-contacts"></div></div>
+      <div class="card"><div class="card-title" style="margin-bottom:.75rem">Häufige Wörter in Trigger-Einträgen</div><div class="kw-cloud" id="tr-words"></div></div>
+    </div>
+
+    <!-- STATISTIK -->
+    <div class="panel" id="p-st">
+      <div id="stats-content"></div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:.4rem;color:var(--vio2)">Traumerinnerung – Einflussfaktoren</div>
+        <div class="card-sub" style="margin-bottom:1rem">Was begünstigt, dass du dich an Träume erinnerst?</div>
+        <div id="dream-factors"></div>
       </div>
+    </div>
 
-      <!-- ========== TRIGGER ========== -->
-      <div class="panel" id="p-tr">
-        <div class="card"><div class="card-hd"><div><div class="card-title">Trigger-Übersicht</div><div class="card-sub">Automatisch aus deinen Einträgen gesammelt</div></div></div><div id="tr-list"></div></div>
-        <div class="card"><div class="card-title" style="margin-bottom:0.5rem">Kontakt-Korrelation</div><div class="card-sub" style="margin-bottom:1rem">Wann war ich mit wem in Kontakt – und wie oft getriggert?</div><div id="tr-contacts"></div></div>
-        <div class="card"><div class="card-title" style="margin-bottom:0.75rem">Häufige Wörter aus Trigger-Einträgen</div><div class="kw-cloud" id="tr-words"></div></div>
-      </div>
-
-      <!-- ========== STATISTIK ========== -->
-      <div class="panel" id="p-st">
-        <div id="stats-content"></div>
-        <div class="card">
-          <div class="card-title" style="margin-bottom:0.4rem">Traumerinnerung – Einflussfaktoren</div>
-          <div class="card-sub" style="margin-bottom:1rem">Was begünstigt, dass du dich an Träume erinnerst?</div>
-          <div id="dream-factors"></div>
-        </div>
-      </div>
-
-    </div><!-- /content -->
-  </div><!-- /main-screen -->
-
-</div><!-- /app -->
+  </div><!-- /content -->
+</div><!-- /screen-main -->
 
 <script>
 /* ============================================================
-   SUPABASE CONFIGURATION
-   Ersetze diese Werte mit deinen eigenen aus dem Supabase Dashboard
-   (Settings → API)
+   SUPABASE CONFIG – bereits eingetragen
    ============================================================ */
-const SUPABASE_URL = 'https://bqpjvzeernglilyabvyg.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxcGp2emVlcm5nbGlseWFidnlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMzgxOTEsImV4cCI6MjA5MzkxNDE5MX0.CGymqLu1PXDINFiHQ1W4s7Ij5-5HO6G3RHVDTQRVzXE';
+const SUPABASE_URL  = 'https://bqpjvzeernglilyabvyg.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxcGp2emVlcm5nbGlseWFidnlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMzgxOTEsImV4cCI6MjA5MzkxNDE5MX0.CGymqLu1PXDINFiHQ1W4s7Ij5-5HO6G3RHVDTQRVzXE';
+
+/* ============================================================
+   GLOBALS
+   ============================================================ */
+let sb = null;
+let user = null;
+let breathTimer = null;
+let selectedMood = '';
+let isNightmare = false;
+let entryFilter = 'j';
 
 /* ============================================================
    INIT
    ============================================================ */
-let supabase = null;
-let currentUser = null;
-let breathTimer = null;
-
-function isConfigured() {
-  return SUPABASE_URL !== 'DEINE_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'DEIN_SUPABASE_ANON_KEY';
-}
-
 async function init() {
-  if (!isConfigured()) {
-    hide('loading-screen');
-    show('config-screen');
+  try {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  } catch(e) {
+    showScreen('auth');
+    authErr('Supabase konnte nicht initialisiert werden: ' + e.message);
     return;
   }
 
-  const timeout = setTimeout(() => {
-    hide('loading-screen');
-    show('auth-screen');
-    authErr('Verbindung zu Supabase fehlgeschlagen. Bitte prüfe Authentication → URL Configuration in Supabase.');
-  }, 8000);
+  // Timeout nach 10s
+  const t = setTimeout(() => {
+    showScreen('auth');
+    authErr('Zeitüberschreitung beim Verbinden mit Supabase. Bitte Seite neu laden.');
+  }, 10000);
 
   try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const { data: { session }, error } = await supabase.auth.getSession();
-    clearTimeout(timeout);
-    hide('loading-screen');
-    if (error) { show('auth-screen'); authErr('Fehler: ' + error.message); return; }
-    if (session) { currentUser = session.user; showApp(); }
-    else { show('auth-screen'); }
-    supabase.auth.onAuthStateChange((_event, session) => {
-      currentUser = session?.user || null;
-      if (currentUser) showApp();
-      else { hide('main-screen'); show('auth-screen'); }
-    });
+    const { data, error } = await sb.auth.getSession();
+    clearTimeout(t);
+    if (error) throw error;
+    if (data.session) {
+      user = data.session.user;
+      showApp();
+    } else {
+      showScreen('auth');
+    }
   } catch(e) {
-    clearTimeout(timeout);
-    hide('loading-screen');
-    show('auth-screen');
-    authErr('Verbindungsfehler: ' + (e.message || 'Unbekannter Fehler'));
-    console.error('Supabase init error:', e);
+    clearTimeout(t);
+    showScreen('auth');
+    authErr('Verbindungsfehler: ' + (e.message || 'Unbekannter Fehler. Bitte Seite neu laden.'));
+    return;
   }
-}
 
-/* ============================================================
-   HELPERS
-   ============================================================ */
-function show(id) { const el = document.getElementById(id); if (el) el.style.display = el.tagName === 'DIV' ? 'flex' : 'block'; }
-function hide(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
-function sv(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
-function gv(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
-function gi(id) { const el = document.getElementById(id); return el ? parseInt(el.value) : 0; }
-
-function toast(msg, dur = 2500) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), dur);
-}
-
-function setSyncState(state) {
-  const d = document.getElementById('sync-dot');
-  if (!d) return;
-  d.className = 'sync-dot' + (state === 'syncing' ? ' syncing' : state === 'error' ? ' error' : '');
-}
-
-function authErr(msg) {
-  const el = document.getElementById('auth-err');
-  el.textContent = msg;
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 5000);
-}
-
-function setLoading(btnId, loading) {
-  const btn = document.getElementById(btnId);
-  if (!btn) return;
-  btn.disabled = loading;
-  btn.textContent = loading ? 'Bitte warten...' : btn.getAttribute('data-label') || btn.textContent;
-}
-
-/* ============================================================
-   AUTH
-   ============================================================ */
-async function doLogin() {
-  const email = gv('l-email'), pass = document.getElementById('l-pass').value;
-  if (!email || !pass) return authErr('Bitte alle Felder ausfüllen.');
-  const btn = document.getElementById('login-btn');
-  btn.disabled = true; btn.textContent = 'Einloggen...';
-  const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-  btn.disabled = false; btn.textContent = 'Einloggen';
-  if (error) authErr('Fehler: ' + error.message);
-}
-
-async function doRegister() {
-  const email = gv('r-email');
-  const pass = document.getElementById('r-pass').value;
-  const pass2 = document.getElementById('r-pass2').value;
-  if (!email || !pass) return authErr('Bitte alle Felder ausfüllen.');
-  if (pass.length < 8) return authErr('Passwort muss mindestens 8 Zeichen haben.');
-  if (pass !== pass2) return authErr('Passwörter stimmen nicht überein.');
-  const btn = document.getElementById('reg-btn');
-  btn.disabled = true; btn.textContent = 'Konto wird erstellt...';
-  const { error } = await supabase.auth.signUp({ email, password: pass });
-  btn.disabled = false; btn.textContent = 'Konto erstellen';
-  if (error) authErr('Fehler: ' + error.message);
-  else authErr('Bestätigungsmail wurde gesendet! Bitte E-Mail prüfen.');
-}
-
-async function doReset() {
-  const email = gv('reset-email');
-  if (!email) return authErr('Bitte E-Mail eingeben.');
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.href
+  sb.auth.onAuthStateChange((_ev, session) => {
+    user = session?.user || null;
+    if (user) showApp();
+    else showScreen('auth');
   });
-  if (error) authErr('Fehler: ' + error.message);
-  else { authErr('Reset-Link gesendet! Prüfe deine E-Mails.'); }
 }
 
-async function doLogout() {
-  await supabase.auth.signOut();
-  hide('main-screen');
-  show('auth-screen');
-}
-
-function switchForm(which) {
-  ['login-form','register-form','reset-form'].forEach(id => hide(id));
-  const fl = document.getElementById('forgot-link');
-  show(which + '-form');
-  if (fl) fl.style.display = which === 'login' ? 'block' : 'none';
-  document.getElementById('auth-err').style.display = 'none';
+/* ============================================================
+   SCREEN MANAGEMENT
+   ============================================================ */
+function showScreen(which) {
+  ['loading','auth','main'].forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (!el) return;
+    if (s === which) {
+      el.style.display = (s === 'main') ? 'flex' : 'flex';
+    } else {
+      el.style.display = 'none';
+    }
+  });
 }
 
 function showApp() {
-  hide('auth-screen');
-  const ms = document.getElementById('main-screen');
-  ms.style.display = 'flex';
+  showScreen('main');
   const nu = document.getElementById('nav-user');
-  if (nu) nu.textContent = currentUser?.email?.split('@')[0] || '';
+  if (nu) nu.textContent = user?.email?.split('@')[0] || '';
   const now = new Date();
-  const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
   sv('today-date', now.toLocaleDateString('de-DE', opts));
   sv('dream-date', now.toLocaleDateString('de-DE', opts));
   renderParts();
 }
 
 /* ============================================================
-   DATABASE – GENERIC CRUD
+   AUTH
+   ============================================================ */
+function authErr(msg) {
+  const el = document.getElementById('auth-err');
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 6000);
+}
+function authOk(msg) {
+  const el = document.getElementById('auth-ok');
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 6000);
+}
+function switchForm(which) {
+  ['login','register','reset'].forEach(f => {
+    const el = document.getElementById('form-' + f);
+    if (el) el.style.display = f === which ? 'block' : 'none';
+  });
+  document.getElementById('auth-err').style.display = 'none';
+  document.getElementById('auth-ok').style.display = 'none';
+}
+async function doLogin() {
+  const email = gv('l-email'), pass = document.getElementById('l-pass').value;
+  if (!email || !pass) return authErr('Bitte alle Felder ausfüllen.');
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = 'Einloggen...';
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  btn.disabled = false; btn.textContent = 'Einloggen';
+  if (error) authErr('Fehler: ' + error.message);
+}
+async function doRegister() {
+  const email = gv('r-email');
+  const pass  = document.getElementById('r-pass').value;
+  const pass2 = document.getElementById('r-pass2').value;
+  if (!email || !pass) return authErr('Bitte alle Felder ausfüllen.');
+  if (pass.length < 8) return authErr('Passwort muss mindestens 8 Zeichen haben.');
+  if (pass !== pass2) return authErr('Passwörter stimmen nicht überein.');
+  const btn = document.getElementById('btn-reg');
+  btn.disabled = true; btn.textContent = 'Wird erstellt...';
+  const { error } = await sb.auth.signUp({ email, password: pass });
+  btn.disabled = false; btn.textContent = 'Konto erstellen';
+  if (error) authErr('Fehler: ' + error.message);
+  else authOk('Konto erstellt! Bitte E-Mail bestätigen, dann einloggen.');
+}
+async function doReset() {
+  const email = gv('reset-email');
+  if (!email) return authErr('Bitte E-Mail eingeben.');
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.href
+  });
+  if (error) authErr('Fehler: ' + error.message);
+  else authOk('Reset-Link wurde gesendet! Prüfe deine E-Mails.');
+}
+async function doLogout() {
+  await sb.auth.signOut();
+}
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function sv(id, v)  { const el = document.getElementById(id); if (el) el.textContent = v; }
+function gv(id)     { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function gi(id)     { const el = document.getElementById(id); return el ? parseInt(el.value) || 0 : 0; }
+function esc(str)   {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+function toast(msg, dur=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+function sync(state) {
+  const d = document.getElementById('sync-dot'); if (!d) return;
+  d.className = 'sync-dot' + (state==='syncing'?' syncing':state==='err'?' err':'');
+}
+
+/* ============================================================
+   DB
    ============================================================ */
 async function dbInsert(table, data) {
-  setSyncState('syncing');
-  const { error } = await supabase.from(table).insert({ ...data, user_id: currentUser.id });
-  setSyncState(error ? 'error' : '');
-  if (error) { toast('Fehler beim Speichern: ' + error.message); return false; }
+  sync('syncing');
+  const { error } = await sb.from(table).insert({ ...data, user_id: user.id });
+  sync(error ? 'err' : '');
+  if (error) { toast('Fehler: ' + error.message); return false; }
   return true;
 }
-
-async function dbSelect(table, order = 'created_at', ascending = false) {
-  const { data, error } = await supabase
-    .from(table)
-    .select('*')
-    .eq('user_id', currentUser.id)
-    .order(order, { ascending });
-  if (error) { toast('Fehler beim Laden'); return []; }
+async function dbSelect(table, col='created_at', asc=false) {
+  const { data, error } = await sb.from(table).select('*')
+    .eq('user_id', user.id).order(col, { ascending: asc });
+  if (error) { toast('Ladefehler: ' + error.message); return []; }
   return data || [];
 }
-
 async function dbDelete(table, id) {
-  setSyncState('syncing');
-  const { error } = await supabase.from(table).delete().eq('id', id).eq('user_id', currentUser.id);
-  setSyncState(error ? 'error' : '');
+  sync('syncing');
+  const { error } = await sb.from(table).delete().eq('id', id).eq('user_id', user.id);
+  sync(error ? 'err' : '');
   return !error;
 }
 
 /* ============================================================
    JOURNAL
    ============================================================ */
-let selectedMood = '';
-
 function selMood(el, mood) {
-  document.querySelectorAll('#p-j .mood-btn').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('#p-j .mood-grid .mood-btn').forEach(b => b.classList.remove('on'));
   el.classList.add('on');
   selectedMood = mood;
 }
-
 async function saveJ() {
-  const btn = document.getElementById('j-save-btn');
+  const btn = document.getElementById('btn-save-j');
   btn.disabled = true; btn.textContent = 'Wird gespeichert...';
   const ok = await dbInsert('journal_entries', {
-    mood: selectedMood,
-    intensity: gi('j-int'),
-    body_symptoms: gv('j-body'),
-    sleep_quality: gi('j-sl'),
-    energy_level: gi('j-en'),
-    events: gv('j-ev'),
-    contacts: gv('j-co'),
-    activities: gv('j-ac'),
-    thoughts: gv('j-th'),
-    triggers: gv('j-tr'),
-    coping: gv('j-cp'),
-    food: gv('j-fo'),
-    selfcare: gv('j-sc'),
-    reflex1: gv('j-r1'),
-    reflex2: gv('j-r2'),
-    reflex3: gv('j-r3'),
+    mood: selectedMood, intensity: gi('j-int'),
+    body_symptoms: gv('j-body'), sleep_quality: gi('j-sl'), energy_level: gi('j-en'),
+    events: gv('j-ev'), contacts: gv('j-co'), activities: gv('j-ac'),
+    thoughts: gv('j-th'), triggers: gv('j-tr'), coping: gv('j-cp'),
+    food: gv('j-fo'), selfcare: gv('j-sc'),
+    reflex1: gv('j-r1'), reflex2: gv('j-r2'), reflex3: gv('j-r3'),
     grounding: gi('j-gd')
   });
   btn.disabled = false; btn.textContent = 'Eintrag speichern';
   if (ok) { toast('Eintrag gespeichert ✓'); clearJ(); }
 }
-
 function clearJ() {
   ['j-body','j-ev','j-co','j-ac','j-th','j-tr','j-cp','j-fo','j-sc','j-r1','j-r2','j-r3'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
-  [['j-int','j-int-v'],['j-sl','j-sl-v'],['j-en','j-en-v'],['j-gd','j-gd-v']].forEach(([rid,vid]) => {
-    const el = document.getElementById(rid); if (el) el.value = 5; sv(vid, '5');
+  [['j-int','j-int-v'],['j-sl','j-sl-v'],['j-en','j-en-v'],['j-gd','j-gd-v']].forEach(([r,v]) => {
+    const el = document.getElementById(r); if (el) el.value = 5; sv(v,'5');
   });
-  document.querySelectorAll('#p-j .mood-btn').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('#p-j .mood-grid .mood-btn').forEach(b => b.classList.remove('on'));
   selectedMood = '';
 }
 
 /* ============================================================
    DREAMS
    ============================================================ */
-let isNightmare = false;
-
 function setNightmare(v) {
   isNightmare = v;
   document.getElementById('dr-nm-y').classList.toggle('on', v);
   document.getElementById('dr-nm-n').classList.toggle('on', !v);
 }
-
 async function saveDream() {
-  const btn = document.getElementById('d-save-btn');
+  const btn = document.getElementById('btn-save-d');
   btn.disabled = true; btn.textContent = 'Wird gespeichert...';
   const ok = await dbInsert('dream_entries', {
-    content: gv('dr-content'),
-    symbols: gv('dr-sym'),
-    feelings_in_dream: gv('dr-feel'),
-    feelings_on_waking: gv('dr-wake'),
-    clarity: gi('dr-cl'),
-    intensity: gi('dr-in'),
-    sleep_quality: gi('dr-sl'),
-    wake_time: gv('dr-time'),
-    is_nightmare: isNightmare,
-    interpretation: gv('dr-interp'),
-    parts_connection: gv('dr-conn')
+    content: gv('dr-content'), symbols: gv('dr-sym'),
+    feelings_in_dream: gv('dr-feel'), feelings_on_waking: gv('dr-wake'),
+    clarity: gi('dr-cl'), intensity: gi('dr-in'), sleep_quality: gi('dr-sl'),
+    wake_time: gv('dr-time'), is_nightmare: isNightmare,
+    interpretation: gv('dr-interp'), parts_connection: gv('dr-conn')
   });
   btn.disabled = false; btn.textContent = 'Traum speichern';
   if (ok) { toast('Traum gespeichert ✓'); clearD(); }
 }
-
 function clearD() {
   ['dr-content','dr-sym','dr-feel','dr-wake','dr-time','dr-interp','dr-conn'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
-  [['dr-cl','dr-cl-v'],['dr-in','dr-in-v'],['dr-sl','dr-sl-v']].forEach(([rid,vid]) => {
-    const el = document.getElementById(rid); if (el) el.value = 5; sv(vid, '5');
+  [['dr-cl','dr-cl-v'],['dr-in','dr-in-v'],['dr-sl','dr-sl-v']].forEach(([r,v]) => {
+    const el = document.getElementById(r); if (el) el.value = 5; sv(v,'5');
   });
   setNightmare(false);
 }
 
 /* ============================================================
-   PARTS (IFS)
+   PARTS
    ============================================================ */
 function togglePartForm() {
   const f = document.getElementById('add-part-form');
   f.style.display = f.style.display === 'none' ? 'block' : 'none';
 }
-
 async function savePart() {
-  const name = gv('pn');
-  if (!name) { toast('Bitte einen Namen eingeben.'); return; }
+  const name = gv('pn'); if (!name) return toast('Bitte einen Namen eingeben.');
   const ok = await dbInsert('inner_parts', {
-    name,
-    emoji: gv('pe') || '🌱',
-    role: gv('pr'),
-    needs: gv('pnd')
+    name, emoji: gv('pe') || '🌱', role: gv('pr'), needs: gv('pnd')
   });
   if (ok) {
     ['pn','pe','pr','pnd'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-    togglePartForm();
-    renderParts();
-    toast('Anteil hinzugefügt ✓');
+    togglePartForm(); renderParts(); toast('Anteil hinzugefügt ✓');
   }
 }
-
 async function deletePart(id) {
-  if (!confirm('Anteil wirklich löschen?')) return;
+  if (!confirm('Diesen Anteil wirklich löschen?')) return;
   const ok = await dbDelete('inner_parts', id);
   if (ok) { renderParts(); toast('Anteil gelöscht'); }
 }
-
 async function renderParts() {
   const parts = await dbSelect('inner_parts', 'created_at', true);
-  const el = document.getElementById('parts-list');
-  if (!el) return;
+  const el = document.getElementById('parts-list'); if (!el) return;
   if (!parts.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">🌿</div>Noch keine inneren Anteile angelegt.<br>Füge deinen ersten Anteil hinzu.</div>';
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🌿</div>Noch keine inneren Anteile angelegt.</div>';
     return;
   }
   el.innerHTML = parts.map(p => `
     <div class="part-card">
-      <div class="part-av">${p.emoji || '🌱'}</div>
+      <div class="part-av">${esc(p.emoji||'🌱')}</div>
       <div style="flex:1">
-        <div class="part-nm">${escHtml(p.name)}</div>
-        <div class="part-rl">${escHtml(p.role || '')}</div>
-        ${p.needs ? `<div class="part-nd">Braucht: ${escHtml(p.needs)}</div>` : ''}
+        <div class="part-nm">${esc(p.name)}</div>
+        <div class="part-rl">${esc(p.role||'')}</div>
+        ${p.needs ? `<div class="part-nd">Braucht: ${esc(p.needs)}</div>` : ''}
       </div>
-      <button onclick="deletePart('${p.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:1rem;padding:0.25rem" title="Löschen">×</button>
-    </div>
-  `).join('');
+      <button onclick="deletePart('${p.id}')" style="background:none;border:none;color:var(--text3);font-size:1rem;padding:.25rem" title="Löschen">×</button>
+    </div>`).join('');
 }
-
 async function savePartsWork() {
   const ok = await dbInsert('parts_work', {
-    active_part: gv('pw-part'),
-    message: gv('pw-msg'),
-    response: gv('pw-resp'),
-    needs: gv('pw-need')
+    active_part: gv('pw-part'), message: gv('pw-msg'),
+    response: gv('pw-resp'), needs: gv('pw-need')
   });
   if (ok) {
     ['pw-part','pw-msg','pw-resp','pw-need'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
@@ -1500,373 +764,356 @@ async function savePartsWork() {
 }
 
 /* ============================================================
-   ENTRIES LIST
+   ENTRIES
    ============================================================ */
-let entryFilter = 'j';
-
+function filterEntries(t) {
+  entryFilter = t;
+  ['j','d','p'].forEach(x => {
+    const b = document.getElementById('ef-' + x); if (b) b.classList.toggle('on', x === t);
+  });
+  renderEntries();
+}
 async function renderEntries() {
   const el = document.getElementById('entries-list');
-  el.innerHTML = '<div class="empty"><div class="spinner" style="margin:0 auto"></div></div>';
-
+  el.innerHTML = '<div class="empty"><div class="spinner" style="margin:0 auto 0.5rem"></div>Lädt...</div>';
   if (entryFilter === 'j') {
-    const entries = await dbSelect('journal_entries');
-    if (!entries.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📖</div>Noch keine Journal-Einträge.</div>'; return; }
-    el.innerHTML = entries.map(e => {
-      const d = new Date(e.created_at);
-      const pre = [e.events, e.thoughts, e.body_symptoms].filter(Boolean).join(' ').slice(0, 110);
-      const ctags = e.contacts ? e.contacts.split(',').slice(0,2).map(c => `<span class="etag etag-p">${escHtml(c.trim())}</span>`).join('') : '';
+    const rows = await dbSelect('journal_entries');
+    if (!rows.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📖</div>Noch keine Journal-Einträge.</div>'; return; }
+    el.innerHTML = rows.map(e => {
+      const d  = new Date(e.created_at);
+      const pre = [e.events, e.thoughts, e.body_symptoms].filter(Boolean).join(' ').slice(0,110);
+      const ct  = e.contacts ? e.contacts.split(',').slice(0,2).map(c=>`<span class="etag etag-p">${esc(c.trim())}</span>`).join('') : '';
       return `<div class="entry-card" onclick="viewEntry('${e.id}')">
-        <div class="entry-date">${d.toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long'})}</div>
-        <div class="entry-pre">${escHtml(pre || '(kein Text)')}${pre.length >= 110 ? '...' : ''}</div>
-        <div class="entry-tags">${e.mood ? `<span class="etag etag-m">${e.mood}</span>` : ''}${e.triggers ? `<span class="etag etag-t">Trigger</span>` : ''}${ctags}</div>
+        <div class="entry-date">${d.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'})}</div>
+        <div class="entry-pre">${esc(pre||'(kein Text)')}${pre.length>=110?'...':''}</div>
+        <div class="entry-tags">${e.mood?`<span class="etag etag-m">${esc(e.mood)}</span>`:''}${e.triggers?`<span class="etag etag-t">Trigger</span>`:''}${ct}</div>
       </div>`;
     }).join('');
-
   } else if (entryFilter === 'd') {
-    const dreams = await dbSelect('dream_entries');
-    if (!dreams.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🌙</div>Noch keine Traumeinträge.</div>'; return; }
-    el.innerHTML = dreams.map(d => {
+    const rows = await dbSelect('dream_entries');
+    if (!rows.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🌙</div>Noch keine Traumeinträge.</div>'; return; }
+    el.innerHTML = rows.map(d => {
       const dt = new Date(d.created_at);
-      const pre = (d.content || '').slice(0, 110);
+      const pre = (d.content||'').slice(0,110);
       return `<div class="dream-card" onclick="viewDream('${d.id}')">
-        <div class="dream-date">${dt.toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long'})}</div>
-        <div class="entry-pre">${escHtml(pre || '(kein Text)')}${pre.length >= 110 ? '...' : ''}</div>
-        <div class="entry-tags">${d.is_nightmare ? '<span class="etag etag-t">Albtraum</span>' : ''}<span class="etag etag-d">Klarheit ${d.clarity}/10</span></div>
+        <div class="dream-date">${dt.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'})}</div>
+        <div class="entry-pre">${esc(pre||'(kein Text)')}${pre.length>=110?'...':''}</div>
+        <div class="entry-tags">${d.is_nightmare?'<span class="etag etag-t">Albtraum</span>':''}<span class="etag etag-d">Klarheit ${d.clarity}/10</span></div>
       </div>`;
     }).join('');
-
   } else {
-    const works = await dbSelect('parts_work');
-    if (!works.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🌿</div>Noch keine Anteile-Arbeit aufgezeichnet.</div>'; return; }
-    el.innerHTML = works.map(w => {
+    const rows = await dbSelect('parts_work');
+    if (!rows.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🌿</div>Noch keine Anteile-Arbeit aufgezeichnet.</div>'; return; }
+    el.innerHTML = rows.map(w => {
       const dt = new Date(w.created_at);
       return `<div class="entry-card">
-        <div class="entry-date">${dt.toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long'})}</div>
-        <div class="entry-pre">${w.active_part ? `<strong style="color:var(--rose2)">${escHtml(w.active_part)}</strong> – ` : ''}${escHtml((w.message || '').slice(0, 100))}</div>
+        <div class="entry-date">${dt.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'})}</div>
+        <div class="entry-pre">${w.active_part?`<strong style="color:var(--ros2)">${esc(w.active_part)}</strong> – `:''}${esc((w.message||'').slice(0,100))}</div>
       </div>`;
     }).join('');
   }
 }
 
-function filterEntries(t) {
-  entryFilter = t;
-  ['j','d','p'].forEach(x => {
-    const b = document.getElementById('ef-' + x);
-    if (b) b.classList.toggle('on', x === t);
-  });
-  renderEntries();
-}
+/* cached for detail view */
+let cachedEntries = [];
+let cachedDreams  = [];
 
 async function viewEntry(id) {
-  const entries = await dbSelect('journal_entries');
-  const e = entries.find(x => x.id === id);
-  if (!e) return;
-  const d = new Date(e.created_at).toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  if (!cachedEntries.length) cachedEntries = await dbSelect('journal_entries');
+  const e = cachedEntries.find(x => x.id === id); if (!e) return;
+  const d = new Date(e.created_at).toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const rows = [
-    ['Stimmung', e.mood], ['Intensität', e.intensity != null ? e.intensity + '/10' : null],
-    ['Energie', e.energy_level != null ? e.energy_level + '/10' : null],
-    ['Schlaf', e.sleep_quality != null ? e.sleep_quality + '/10' : null],
-    ['Grounding', e.grounding != null ? e.grounding + '/10' : null],
-    ['Körper', e.body_symptoms], ['Ereignisse', e.events], ['Kontakte', e.contacts],
-    ['Aktivitäten', e.activities], ['Gedanken', e.thoughts], ['Trigger', e.triggers],
-    ['Coping', e.coping], ['Gegessen', e.food], ['Selbstfürsorge', e.selfcare],
-    ['Reflexion 1', e.reflex1], ['Reflexion 2', e.reflex2], ['Reflexion 3', e.reflex3]
-  ].filter(([,v]) => v).map(([k,v]) => `<tr><td>${k}</td><td>${escHtml(String(v))}</td></tr>`).join('');
+    ['Stimmung',e.mood],['Intensität',e.intensity!=null?e.intensity+'/10':null],
+    ['Energie',e.energy_level!=null?e.energy_level+'/10':null],
+    ['Schlaf',e.sleep_quality!=null?e.sleep_quality+'/10':null],
+    ['Grounding',e.grounding!=null?e.grounding+'/10':null],
+    ['Körper',e.body_symptoms],['Ereignisse',e.events],['Kontakte',e.contacts],
+    ['Aktivitäten',e.activities],['Gedanken',e.thoughts],['Trigger',e.triggers],
+    ['Coping',e.coping],['Gegessen',e.food],['Selbstfürsorge',e.selfcare],
+    ['Reflexion 1',e.reflex1],['Reflexion 2',e.reflex2],['Reflexion 3',e.reflex3]
+  ].filter(([,v])=>v).map(([k,v])=>`<tr><td>${k}</td><td>${esc(String(v))}</td></tr>`).join('');
   showDetail(`<h2>${d}</h2><table class="detail-table">${rows}</table>`, id, 'journal_entries');
 }
-
 async function viewDream(id) {
-  const dreams = await dbSelect('dream_entries');
-  const d = dreams.find(x => x.id === id);
-  if (!d) return;
-  const dt = new Date(d.created_at).toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  if (!cachedDreams.length) cachedDreams = await dbSelect('dream_entries');
+  const d = cachedDreams.find(x => x.id === id); if (!d) return;
+  const dt = new Date(d.created_at).toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const rows = [
-    ['Traum', d.content], ['Symbole', d.symbols], ['Im Traum', d.feelings_in_dream],
-    ['Beim Aufwachen', d.feelings_on_waking], ['Uhrzeit', d.wake_time],
-    ['Klarheit', d.clarity != null ? d.clarity + '/10' : null],
-    ['Intensität', d.intensity != null ? d.intensity + '/10' : null],
-    ['Schlaf', d.sleep_quality != null ? d.sleep_quality + '/10' : null],
-    ['Albtraum', d.is_nightmare != null ? (d.is_nightmare ? 'Ja' : 'Nein') : null],
-    ['Interpretation', d.interpretation], ['Verbindung', d.parts_connection]
-  ].filter(([,v]) => v).map(([k,v]) => `<tr><td>${k}</td><td>${escHtml(String(v))}</td></tr>`).join('');
-  showDetail(`<h2 style="color:var(--violet2)">${dt}</h2><table class="detail-table">${rows}</table>`, id, 'dream_entries', true);
+    ['Traum',d.content],['Symbole',d.symbols],['Im Traum',d.feelings_in_dream],
+    ['Beim Aufwachen',d.feelings_on_waking],['Uhrzeit',d.wake_time],
+    ['Klarheit',d.clarity!=null?d.clarity+'/10':null],
+    ['Intensität',d.intensity!=null?d.intensity+'/10':null],
+    ['Schlaf',d.sleep_quality!=null?d.sleep_quality+'/10':null],
+    ['Albtraum',d.is_nightmare!=null?(d.is_nightmare?'Ja':'Nein'):null],
+    ['Interpretation',d.interpretation],['Verbindung',d.parts_connection]
+  ].filter(([,v])=>v).map(([k,v])=>`<tr><td>${k}</td><td>${esc(String(v))}</td></tr>`).join('');
+  showDetail(`<h2 style="color:var(--vio2)">${dt}</h2><table class="detail-table">${rows}</table>`, id, 'dream_entries', true);
 }
-
-function showDetail(html, id, table, violet = false) {
+function showDetail(html, id, table, violet=false) {
   const area = document.getElementById('detail-area');
-  area.innerHTML = `<div class="detail-overlay" style="${violet ? 'border-color:var(--violet3)' : ''}">
+  area.innerHTML = `<div class="detail-box" style="${violet?'border-color:var(--vio3)':''}">
     ${html}
     <div class="detail-actions">
-      <button class="btn-ghost" onclick="document.getElementById('detail-area').innerHTML=''">Schließen</button>
+      <button class="btn-ghost" onclick="closeDetail()">Schließen</button>
       <button class="btn-danger" onclick="deleteEntry('${id}','${table}')">Löschen</button>
     </div>
   </div>`;
-  area.scrollIntoView({ behavior: 'smooth' });
+  area.scrollIntoView({behavior:'smooth'});
 }
-
+function closeDetail() {
+  document.getElementById('detail-area').innerHTML = '';
+}
 async function deleteEntry(id, table) {
-  if (!confirm('Eintrag wirklich löschen? Dies kann nicht rückgängig gemacht werden.')) return;
+  if (!confirm('Eintrag wirklich löschen? Das kann nicht rückgängig gemacht werden.')) return;
   const ok = await dbDelete(table, id);
   if (ok) {
-    document.getElementById('detail-area').innerHTML = '';
-    renderEntries();
-    toast('Eintrag gelöscht');
+    cachedEntries = []; cachedDreams = [];
+    closeDetail(); renderEntries(); toast('Eintrag gelöscht');
   }
 }
 
 /* ============================================================
-   KEYWORD EXTRACTION
+   KEYWORDS
    ============================================================ */
-const STOP = new Set('ich du er sie es wir ihr mich mir dich dir uns euch sich und oder aber dass weil wenn als wie so auch noch schon nicht kein keine keine der die das ein eine ist war bin habe hat hatte hast haben sein mit bei von zu in an auf für über unter nach vor heute immer wieder sehr etwas viel mehr dann jetzt hier noch mal was wer wo warum welche zum zur beim vom nur wird wurde kann muss will soll haben sein wurden haben mich'.split(' '));
+const STOP = new Set('ich du er sie es wir ihr mich mir dich dir uns euch sich und oder aber dass weil wenn als wie so auch noch schon nicht kein keine der die das ein eine ist war bin habe hat hatte hast haben sein mit bei von zu in an auf für über unter nach vor heute immer wieder sehr etwas viel mehr dann jetzt hier noch mal was wer wo warum welche zum zur beim vom nur wird wurde kann muss will sollen worden haben gewesen'.split(' '));
 function extractKW(texts) {
   const f = {};
   texts.forEach(t => {
-    (t || '').toLowerCase().split(/[\s,\.!?;:()\-\n"]+/).forEach(w => {
-      w = w.replace(/[^a-zäöüß]/g, '');
-      if (w.length > 3 && !STOP.has(w)) f[w] = (f[w] || 0) + 1;
+    (t||'').toLowerCase().split(/[\s,\.!?;:()\-\n"']+/).forEach(w => {
+      w = w.replace(/[^a-zäöüß]/g,'');
+      if (w.length > 3 && !STOP.has(w)) f[w] = (f[w]||0) + 1;
     });
   });
   return Object.entries(f).sort((a,b) => b[1]-a[1]);
 }
 
 /* ============================================================
-   TRIGGER ANALYSIS
+   TRIGGERS
    ============================================================ */
 async function renderTriggers() {
   const entries = await dbSelect('journal_entries');
-  const withTriggers = entries.filter(e => e.triggers && e.triggers.trim());
+  const withT = entries.filter(e => e.triggers && e.triggers.trim());
 
-  // Trigger phrases
   const tm = {};
-  withTriggers.forEach(e => {
-    e.triggers.split(/[,;.\n]+/).map(t => t.trim().toLowerCase()).filter(t => t.length > 3).forEach(t => {
-      if (!tm[t]) tm[t] = { count: 0, intensities: [] };
-      tm[t].count++;
-      tm[t].intensities.push(e.intensity || 0);
+  withT.forEach(e => {
+    e.triggers.split(/[,;.\n]+/).map(t=>t.trim().toLowerCase()).filter(t=>t.length>3).forEach(t => {
+      if (!tm[t]) tm[t] = {count:0, intensities:[]};
+      tm[t].count++; tm[t].intensities.push(e.intensity||0);
     });
   });
   const sorted = Object.entries(tm).sort((a,b) => {
-    const sa = a[1].count * (a[1].intensities.reduce((s,v)=>s+v,0) / Math.max(a[1].intensities.length,1));
-    const sb = b[1].count * (b[1].intensities.reduce((s,v)=>s+v,0) / Math.max(b[1].intensities.length,1));
-    return sb - sa;
-  }).slice(0, 15);
+    const va = a[1].count * (a[1].intensities.reduce((s,v)=>s+v,0)/Math.max(a[1].intensities.length,1));
+    const vb = b[1].count * (b[1].intensities.reduce((s,v)=>s+v,0)/Math.max(b[1].intensities.length,1));
+    return vb-va;
+  }).slice(0,15);
 
   const tl = document.getElementById('tr-list');
-  tl.innerHTML = sorted.length ? sorted.map(([text, data]) => {
-    const avg = data.intensities.reduce((s,v)=>s+v,0) / Math.max(data.intensities.length,1);
-    const sc = avg >= 7 ? 'tsev-hi' : avg >= 4 ? 'tsev-md' : 'tsev-lo';
-    return `<div class="trigger-item"><div class="tsev ${sc}"></div><div class="ttxt">${escHtml(text)}</div><div class="tcnt">${data.count}× | Ø ${avg.toFixed(1)}/10</div></div>`;
-  }).join('') : '<div class="empty">Noch keine Trigger-Einträge vorhanden.<br>Fülle das "Trigger"-Feld im Journal aus.</div>';
+  tl.innerHTML = sorted.length ? sorted.map(([txt,d]) => {
+    const avg = d.intensities.reduce((s,v)=>s+v,0)/Math.max(d.intensities.length,1);
+    const sc = avg>=7?'tsev-hi':avg>=4?'tsev-md':'tsev-lo';
+    return `<div class="trigger-item"><div class="tsev ${sc}"></div><div class="ttxt">${esc(txt)}</div><div class="tcnt">${d.count}× | Ø ${avg.toFixed(1)}/10</div></div>`;
+  }).join('') : '<div class="empty">Noch keine Trigger-Einträge.<br>Fülle das "Trigger"-Feld im Journal aus.</div>';
 
-  // Contact correlation
   const cd = {};
   entries.forEach(e => {
     if (!e.contacts) return;
-    const ht = e.triggers && e.triggers.trim();
-    e.contacts.split(',').map(c => c.trim()).filter(Boolean).forEach(c => {
-      if (!cd[c]) cd[c] = { total: 0, triggered: 0, intensities: [] };
+    const ht = !!(e.triggers && e.triggers.trim());
+    e.contacts.split(',').map(c=>c.trim()).filter(Boolean).forEach(c => {
+      if (!cd[c]) cd[c] = {total:0, triggered:0, intensities:[]};
       cd[c].total++;
-      if (ht) { cd[c].triggered++; cd[c].intensities.push(e.intensity || 0); }
+      if (ht) { cd[c].triggered++; cd[c].intensities.push(e.intensity||0); }
     });
   });
   const cl = Object.entries(cd).map(([c,d]) => ({
-    contact: c, rate: d.total > 0 ? d.triggered / d.total : 0,
-    total: d.total, triggered: d.triggered,
-    avgI: d.intensities.length ? d.intensities.reduce((s,v)=>s+v,0)/d.intensities.length : 0
-  })).sort((a,b) => b.rate - a.rate);
+    contact:c, rate:d.total>0?d.triggered/d.total:0,
+    total:d.total, triggered:d.triggered,
+    avgI:d.intensities.length?d.intensities.reduce((s,v)=>s+v,0)/d.intensities.length:0
+  })).sort((a,b)=>b.rate-a.rate);
 
   const cel = document.getElementById('tr-contacts');
   cel.innerHTML = cl.length ? cl.map(c => {
-    const pct = Math.round(c.rate * 100);
-    const col = pct >= 70 ? '#C48080' : pct >= 40 ? '#7AADA8' : '#9A8AB4';
-    return `<div class="corr-item"><div class="corr-top"><span class="corr-name">${escHtml(c.contact)}</span><span class="corr-val">${c.triggered}/${c.total} Tage (${pct}%) · Ø ${c.avgI.toFixed(1)}/10</span></div><div class="bar-bg"><div class="bar-fg" style="width:${pct}%;background:${col}"></div></div></div>`;
-  }).join('') : '<div class="empty" style="padding:1rem">Noch nicht genug Kontaktdaten für Auswertung.</div>';
+    const pct = Math.round(c.rate*100);
+    const col = pct>=70?'var(--red2)':pct>=40?'var(--vio2)':'var(--acc2)';
+    return `<div class="corr-item">
+      <div class="corr-top"><span class="corr-name">${esc(c.contact)}</span><span class="corr-val">${c.triggered}/${c.total} Tage (${pct}%) · Ø ${c.avgI.toFixed(1)}/10</span></div>
+      <div class="bar-bg"><div class="bar-fg" style="width:${pct}%;background:${col}"></div></div>
+    </div>`;
+  }).join('') : '<div class="empty" style="padding:1rem">Noch nicht genug Kontaktdaten.</div>';
 
-  // Keyword cloud from trigger texts
-  const kws = extractKW(withTriggers.map(e => e.triggers)).slice(0, 35);
-  const max = kws[0]?.[1] || 1;
+  const kws = extractKW(withT.map(e=>e.triggers)).slice(0,35);
+  const max = kws[0]?.[1]||1;
   document.getElementById('tr-words').innerHTML = kws.map(([w,f]) =>
-    `<span class="kw ${f >= max*0.6 ? 'kw-hi' : f >= max*0.3 ? 'kw-md' : 'kw-lo'}">${escHtml(w)} <span style="opacity:0.5">${f}</span></span>`
-  ).join('') || '<span style="color:var(--text3);font-size:0.8rem;font-family:sans-serif">Keine Daten</span>';
+    `<span class="kw ${f>=max*.6?'kw-hi':f>=max*.3?'kw-md':'kw-lo'}">${esc(w)} <span style="opacity:.5">${f}</span></span>`
+  ).join('') || '<span style="color:var(--text3);font-size:.8rem;font-family:sans-serif">Keine Daten</span>';
 }
 
 /* ============================================================
    STATISTICS
    ============================================================ */
 async function renderStats() {
-  const [entries, dreams] = await Promise.all([
-    dbSelect('journal_entries'),
-    dbSelect('dream_entries')
-  ]);
-
+  const [entries, dreams] = await Promise.all([dbSelect('journal_entries'), dbSelect('dream_entries')]);
   const el = document.getElementById('stats-content');
   if (!entries.length && !dreams.length) {
-    el.innerHTML = '<div class="card"><div class="empty">Noch keine Daten vorhanden.<br>Schreibe ein paar Einträge!</div></div>';
+    el.innerHTML = '<div class="card"><div class="empty">Noch keine Daten. Schreibe ein paar Einträge!</div></div>';
+    renderDreamFactors([], []);
     return;
   }
-
   const avg = arr => arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : 0;
-  const aI = avg(entries.map(e=>e.intensity||0)).toFixed(1);
+  const aI  = avg(entries.map(e=>e.intensity||0)).toFixed(1);
   const aSl = avg(entries.map(e=>e.sleep_quality||0)).toFixed(1);
   const aEn = avg(entries.map(e=>e.energy_level||0)).toFixed(1);
   const aGr = avg(entries.map(e=>e.grounding||0)).toFixed(1);
 
-  const moodCount = {};
-  entries.forEach(e => { if (e.mood) moodCount[e.mood] = (moodCount[e.mood]||0)+1; });
-  const topM = Object.entries(moodCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const mc = {};
+  entries.forEach(e => { if (e.mood) mc[e.mood]=(mc[e.mood]||0)+1; });
+  const topM = Object.entries(mc).sort((a,b)=>b[1]-a[1]).slice(0,5);
 
   const recent = entries.slice(0,14).reverse();
-  const allTexts = entries.flatMap(e => [e.events, e.thoughts, e.body_symptoms, e.reflex1, e.reflex2, e.reflex3]).filter(Boolean);
-  const kws = extractKW(allTexts).slice(0, 30);
-  const kmax = kws[0]?.[1] || 1;
+  const allTxt = entries.flatMap(e=>[e.events,e.thoughts,e.body_symptoms,e.reflex1,e.reflex2,e.reflex3]).filter(Boolean);
+  const kws = extractKW(allTxt).slice(0,28);
+  const kmax = kws[0]?.[1]||1;
 
   el.innerHTML = `
     <div class="card">
-      <div class="card-title" style="margin-bottom:0.85rem">Journal-Übersicht</div>
+      <div class="card-title" style="margin-bottom:.85rem">Journal-Übersicht</div>
       <div class="stat-grid">
         <div class="stat-box"><div class="stat-n">${entries.length}</div><div class="stat-l">Einträge</div></div>
         <div class="stat-box"><div class="stat-n">${aI}</div><div class="stat-l">Ø Intensität</div></div>
         <div class="stat-box"><div class="stat-n">${aSl}</div><div class="stat-l">Ø Schlaf</div></div>
         <div class="stat-box"><div class="stat-n">${aGr}</div><div class="stat-l">Ø Grounding</div></div>
       </div>
-      ${topM.length ? `<div>${topM.map(([m,c]) => `<div class="corr-item"><div class="corr-top"><span class="corr-name">${m}</span><span class="corr-val">${c}× (${Math.round(c/entries.length*100)}%)</span></div><div class="bar-bg"><div class="bar-fg" style="width:${Math.round(c/entries.length*100)}%;background:var(--gold)"></div></div></div>`).join('')}</div>` : ''}
-      ${recent.length > 1 ? `<div style="margin-top:1rem"><div class="sec-label"><span class="sec-dot"></span>Intensitätsverlauf (letzte Einträge)</div><div class="bar-chart">${recent.map(e => { const h = Math.max(3,Math.round((e.intensity||0)*6)); const col = (e.intensity||0)>=7?'#C48080':(e.intensity||0)>=4?'#7AADA8':'#9A8AB4'; return `<div class="bar-chart-col" style="height:${h}px;background:${col}" title="${new Date(e.created_at).toLocaleDateString('de-DE')} – ${e.intensity}/10"></div>`; }).join('')}</div></div>` : ''}
+      ${topM.length?`<div>${topM.map(([m,c])=>`<div class="corr-item"><div class="corr-top"><span class="corr-name">${esc(m)}</span><span class="corr-val">${c}× (${Math.round(c/entries.length*100)}%)</span></div><div class="bar-bg"><div class="bar-fg" style="width:${Math.round(c/entries.length*100)}%;background:var(--acc)"></div></div></div>`).join('')}</div>`:''}
+      ${recent.length>1?`<div style="margin-top:1rem"><div class="sec-label"><span class="sec-dot"></span>Intensitätsverlauf</div><div class="bar-chart">${recent.map(e=>{const h=Math.max(3,Math.round((e.intensity||0)*6));const col=(e.intensity||0)>=7?'var(--red2)':(e.intensity||0)>=4?'var(--vio2)':'var(--acc2)';return`<div class="bar-chart-col" style="height:${h}px;background:${col}" title="${new Date(e.created_at).toLocaleDateString('de-DE')} – ${e.intensity}/10"></div>`;}).join('')}</div></div>`:''}
     </div>
-    ${dreams.length ? `<div class="card"><div class="card-title" style="margin-bottom:0.85rem">Traum-Übersicht</div>
+    ${dreams.length?`<div class="card"><div class="card-title" style="margin-bottom:.85rem;color:var(--vio2)">Traum-Übersicht</div>
       <div class="stat-grid">
         <div class="stat-box"><div class="stat-n">${dreams.length}</div><div class="stat-l">Träume</div></div>
         <div class="stat-box"><div class="stat-n">${dreams.filter(d=>d.is_nightmare).length}</div><div class="stat-l">Albträume</div></div>
         <div class="stat-box"><div class="stat-n">${avg(dreams.map(d=>d.clarity||0)).toFixed(1)}</div><div class="stat-l">Ø Klarheit</div></div>
         <div class="stat-box"><div class="stat-n">${avg(dreams.map(d=>d.intensity||0)).toFixed(1)}</div><div class="stat-l">Ø Intensität</div></div>
-      </div>
-    </div>` : ''}
-    <div class="card"><div class="card-title" style="margin-bottom:0.75rem">Häufige Wörter</div><div class="kw-cloud">${kws.map(([w,f]) => `<span class="kw ${f>=kmax*0.6?'kw-hi':f>=kmax*0.3?'kw-md':'kw-lo'}">${escHtml(w)}</span>`).join('')}</div></div>
-    <div class="card"><div class="card-title" style="margin-bottom:0.75rem">Schlaf · Energie · Grounding im Vergleich</div>${[['Schlaf',aSl,'#9A8AB4'],['Energie',aEn,'#7AADA8'],['Grounding',aGr,'#A89EC8']].map(([l,v,c])=>`<div class="corr-item"><div class="corr-top"><span class="corr-name">${l}</span><span class="corr-val">Ø ${v}/10</span></div><div class="bar-bg"><div class="bar-fg" style="width:${Math.round(parseFloat(v)*10)}%;background:${c}"></div></div></div>`).join('')}</div>
-  `;
+      </div></div>`:''}
+    <div class="card"><div class="card-title" style="margin-bottom:.75rem">Häufige Wörter</div>
+      <div class="kw-cloud">${kws.map(([w,f])=>`<span class="kw ${f>=kmax*.6?'kw-hi':f>=kmax*.3?'kw-md':'kw-lo'}">${esc(w)}</span>`).join('')}</div>
+    </div>
+    <div class="card"><div class="card-title" style="margin-bottom:.75rem">Schlaf · Energie · Grounding</div>
+      ${[['Schlaf',aSl,'var(--acc2)'],['Energie',aEn,'var(--vio2)'],['Grounding',aGr,'var(--ros2)']].map(([l,v,c])=>`
+        <div class="corr-item"><div class="corr-top"><span class="corr-name">${l}</span><span class="corr-val">Ø ${v}/10</span></div><div class="bar-bg"><div class="bar-fg" style="width:${Math.round(parseFloat(v)*10)}%;background:${c}"></div></div></div>`).join('')}
+    </div>`;
 
-  // Dream recall factors
+  renderDreamFactors(entries, dreams);
+}
+
+function renderDreamFactors(entries, dreams) {
   const dfe = document.getElementById('dream-factors');
-  if (dreams.length >= 2 && entries.length >= 2) {
-    const dreamDates = new Set(dreams.map(d => d.created_at.slice(0,10)));
-    const journalOnDreamDays = entries.filter(e => dreamDates.has(e.created_at.slice(0,10)));
-    const journalOnOtherDays = entries.filter(e => !dreamDates.has(e.created_at.slice(0,10)));
-    const factors = [
-      { label: 'Ø Schlaf an Tagen mit Traumerinnerung', val: avg(journalOnDreamDays.map(e=>e.sleep_quality||0)).toFixed(1), compare: avg(journalOnOtherDays.map(e=>e.sleep_quality||0)).toFixed(1), desc: 'vs. Tage ohne Traumerinnerung' },
-      { label: 'Ø Intensität an Tagen mit Traumerinnerung', val: avg(journalOnDreamDays.map(e=>e.intensity||0)).toFixed(1), compare: avg(journalOnOtherDays.map(e=>e.intensity||0)).toFixed(1), desc: 'vs. Tage ohne Traumerinnerung' },
-      { label: 'Anteil Albträume', val: Math.round(dreams.filter(d=>d.is_nightmare).length/dreams.length*100) + '%', desc: `${dreams.filter(d=>d.is_nightmare).length} von ${dreams.length} Traumeinträgen` }
-    ];
-    dfe.innerHTML = factors.map(f => `<div class="corr-item">
-      <div class="corr-top"><span class="corr-name">${f.label}</span><span class="corr-val">${f.val}${f.compare ? ` / ${f.compare}` : ''}</span></div>
-      ${f.desc ? `<div style="font-size:0.7rem;color:var(--text3);font-family:sans-serif;margin-top:0.15rem">${f.desc}</div>` : ''}
-    </div>`).join('');
-  } else {
-    dfe.innerHTML = '<div class="empty" style="padding:1rem">Mehr Einträge und Träume aufschreiben für die Faktor-Analyse.</div>';
+  if (dreams.length < 2 || entries.length < 2) {
+    dfe.innerHTML = '<div class="empty" style="padding:1rem">Mehr Einträge und Träume aufschreiben für Faktor-Analyse.</div>';
+    return;
   }
+  const avg = arr => arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : 0;
+  const dreamDates = new Set(dreams.map(d=>d.created_at.slice(0,10)));
+  const jOn  = entries.filter(e=>dreamDates.has(e.created_at.slice(0,10)));
+  const jOff = entries.filter(e=>!dreamDates.has(e.created_at.slice(0,10)));
+  dfe.innerHTML = [
+    {label:'Ø Schlaf an Tagen mit Traumerinnerung', val:avg(jOn.map(e=>e.sleep_quality||0)).toFixed(1), cmp:avg(jOff.map(e=>e.sleep_quality||0)).toFixed(1), desc:'vs. Tage ohne Traumerinnerung'},
+    {label:'Ø Intensität an Tagen mit Traumerinnerung', val:avg(jOn.map(e=>e.intensity||0)).toFixed(1), cmp:avg(jOff.map(e=>e.intensity||0)).toFixed(1), desc:'vs. Tage ohne Traumerinnerung'},
+    {label:'Anteil Albträume', val:Math.round(dreams.filter(d=>d.is_nightmare).length/dreams.length*100)+'%', desc:`${dreams.filter(d=>d.is_nightmare).length} von ${dreams.length} aufgezeichneten Träumen`}
+  ].map(f=>`<div class="corr-item">
+    <div class="corr-top"><span class="corr-name">${f.label}</span><span class="corr-val">${f.val}${f.cmp?' / '+f.cmp:''}</span></div>
+    ${f.desc?`<div style="font-size:.7rem;color:var(--text3);font-family:sans-serif;margin-top:.15rem">${f.desc}</div>`:''}
+  </div>`).join('');
 }
 
 /* ============================================================
-   SOS / NOTFALL
+   SOS
    ============================================================ */
-const sosMethods = {
+const SOS_CONTENT = {
   breath: `<div class="sos-step"><h3>🫁 4-7-8 Atemübung</h3>
-    <p>Diese Übung aktiviert deinen Parasympathikus und beruhigt das Nervensystem durch verlängerte Ausatmung.</p>
+    <p>Diese Übung aktiviert den Parasympathikus und beruhigt das Nervensystem.</p>
     <div class="breath-circle" id="bc" onclick="startBreath()">Tippe zum Starten</div>
-    <div id="breath-text" style="text-align:center;font-size:0.8rem;color:var(--text3);font-family:sans-serif;margin-top:0.25rem">4 sec einatmen · 7 sec halten · 8 sec ausatmen</div>
-    <p style="margin-top:0.75rem;font-style:italic;color:var(--text3)">Wiederhole den Zyklus 3–4 Mal. Wenn es zu intensiv wird, kehre zu normalem Atem zurück.</p>
-    </div>`,
+    <p id="breath-info" style="text-align:center;font-size:.78rem;color:var(--text3);font-family:sans-serif">4 sec einatmen · 7 sec halten · 8 sec ausatmen</p>
+    <p style="margin-top:.75rem;font-style:italic;color:var(--text3)">Wiederhole 3–4 Mal. Bei Schwindel einfach zurück zum normalen Atem.</p></div>`,
   grounding: `<div class="sos-step"><h3>🌍 5-4-3-2-1 Grounding</h3>
-    <p>Diese Methode holt dich zurück in den gegenwärtigen Moment und unterbricht den Teufelskreis.</p>
+    <p>Holt dich zurück in den gegenwärtigen Moment und unterbricht den Stress-Kreislauf.</p>
     <ol>
       <li><strong>5 Dinge die du SIEHST</strong> – Schau dich langsam um. Benenne jeden Gegenstand innerlich.</li>
-      <li><strong>4 Dinge die du FÜHLST</strong> – Stofffasern auf der Haut, Boden unter den Füßen, Temperatur der Luft, Sitz unter dir.</li>
+      <li><strong>4 Dinge die du FÜHLST</strong> – Stoff auf der Haut, Boden unter den Füßen, Lufttemperatur, Sitz unter dir.</li>
       <li><strong>3 Dinge die du HÖRST</strong> – Lausche aktiv. Auch entfernte oder leise Geräusche.</li>
       <li><strong>2 Dinge die du RIECHST</strong> – Oder erinnerst du dich an einen angenehmen Geruch?</li>
       <li><strong>1 Ding das du SCHMECKST</strong> – Was schmeckst du im Mund?</li>
     </ol>
-    <p style="margin-top:0.75rem;font-style:italic;color:var(--text3)">Dein Körper ist jetzt hier. Du bist sicher.</p></div>`,
+    <p style="margin-top:.75rem;font-style:italic;color:var(--text3)">Dein Körper ist jetzt hier. Du bist sicher.</p></div>`,
   tresor: `<div class="sos-step"><h3>🔒 Tresormethode</h3>
-    <p>Diese Stabilisierungsmethode aus der Traumatherapie ermöglicht, Belastendes gezielt beiseitezulegen – ohne es zu verdrängen.</p>
+    <p>Eine Stabilisierungsmethode aus der Traumatherapie: Belastendes gezielt beiseitezulegen – ohne es zu verdrängen.</p>
     <ol>
       <li>Schließe die Augen wenn möglich. Atme dreimal tief ein und aus.</li>
-      <li>Stelle dir einen massiven, stabilen Tresor vor. So groß wie du möchtest. Aus dem Material das dir am sichersten erscheint – Stahl, Stein, Holz.</li>
-      <li>Visualisiere diesen Tresor klar und deutlich. Welche Farbe hat er? Wie schwer ist er? Wie riecht er?</li>
-      <li>Nimm nun das Belastende – das Bild, das Gefühl, den Gedanken – und lege es behutsam in den Tresor.</li>
+      <li>Stelle dir einen massiven, stabilen Tresor vor. Aus dem Material das sich am sichersten anfühlt – Stahl, Stein, Holz.</li>
+      <li>Visualisiere ihn klar und deutlich. Welche Farbe? Wie schwer? Wie riecht er?</li>
+      <li>Nimm das Belastende – das Bild, das Gefühl, den Gedanken – und lege es behutsam in den Tresor.</li>
       <li>Schließe die Tür. Höre das Schloss einrasten. Du hast den Schlüssel.</li>
-      <li>Du bestimmst, wann und ob du diesen Tresor wieder öffnest – zum Beispiel nur in der Therapie.</li>
+      <li>Du entscheidest, wann und ob du ihn wieder öffnest – zum Beispiel nur in der Therapie.</li>
     </ol>
-    <p style="margin-top:0.75rem;font-style:italic;color:var(--text3)">Das Belastende ist sicher verwahrt. Du musst es jetzt nicht tragen.</p></div>`,
+    <p style="margin-top:.75rem;font-style:italic;color:var(--text3)">Das Belastende ist sicher verwahrt. Du musst es jetzt nicht tragen.</p></div>`,
   safe: `<div class="sos-step"><h3>🏡 Innerer sicherer Ort</h3>
     <p>Diese Imagination schafft einen inneren Schutzraum, zu dem du jederzeit zurückkehren kannst.</p>
     <ol>
-      <li>Schließe die Augen wenn möglich. Atme dreimal tief durch die Nase ein.</li>
-      <li>Stelle dir einen Ort vor, real oder imaginär, an dem du dich vollkommen sicher, geborgen und wohl fühlst. Ein Ort in der Natur, ein Zimmer, ein Lichtfeld – alles ist möglich.</li>
+      <li>Schließe die Augen wenn möglich. Atme dreimal tief.</li>
+      <li>Stelle dir einen Ort vor – real oder imaginär – an dem du dich vollkommen sicher und geborgen fühlst.</li>
       <li>Was siehst du dort? Welche Farben, Formen, Licht?</li>
       <li>Was hörst du? Was riechst du? Wie ist die Temperatur?</li>
-      <li>Lass dich von diesem Ort aufnehmen und halte. Du gehörst hierher.</li>
-      <li>Atme hier mehrere Minuten. Speichere dieses Gefühl in deinem Körper.</li>
+      <li>Lass dich von diesem Ort aufnehmen. Du gehörst hierher.</li>
+      <li>Atme mehrere Minuten hier. Speichere dieses Gefühl in deinem Körper.</li>
     </ol>
-    <p style="margin-top:0.75rem;font-style:italic;color:var(--text3)">Du kannst immer hierher zurückkehren. Dieser Ort gehört dir.</p></div>`,
+    <p style="margin-top:.75rem;font-style:italic;color:var(--text3)">Du kannst immer hierher zurückkehren. Dieser Ort gehört dir.</p></div>`,
   window: `<div class="sos-step"><h3>🪟 Zurück ins Toleranzfenster</h3>
     <p>Das Toleranzfenster ist der Bereich, in dem dein Nervensystem reguliert ist – weder überflutet noch abgestumpft.</p>
-    <p style="margin-top:0.5rem"><strong>Wo bist du gerade?</strong></p>
-    <ul style="margin-top:0.5rem">
-      <li><strong>Hyperarousal (zu viel):</strong> Rasende Gedanken, Herzrasen, Panik, Zittern, Reizbarkeit, Dissoziation nach oben<br>
-      → <em>Verlangsamen:</em> Kaltes Wasser auf Handgelenke/Gesicht · Langsam und betont ausatmen · Füße fest auf den Boden drücken · Etwas Schweres halten · Eiswürfel halten · Langsam zählen</li>
+    <ul>
+      <li style="margin-bottom:.6rem"><strong>Zu viel (Hyperarousal):</strong> Herzrasen, Panik, rasende Gedanken, Zittern<br>
+      <em>→ Verlangsamen:</em> Kaltes Wasser auf Handgelenke · Langsam ausatmen · Füße fest auf Boden · Etwas Schweres halten</em></li>
+      <li><strong>Zu wenig (Hypoarousal):</strong> Taubheit, Leere, Schwere, Abgeschnitten sein<br>
+      <em>→ Aktivieren:</em> Treppe steigen · Rhythmisch klatschen · Kaltes Wasser trinken · Musik mit Rhythmus · Stark riechen (Pfefferminze)</em></li>
     </ul>
-    <ul style="margin-top:0.75rem">
-      <li><strong>Hypoarousal (zu wenig):</strong> Taubheit, Leere, Schwere, Abgeschnitten sein, Dissoziation nach unten<br>
-      → <em>Aktivieren:</em> Treppe steigen · Rhythmisch in die Hände klatschen · Kaltes Wasser trinken · Musik mit starkem Rhythmus · Auf der Stelle laufen · Stark riechen (Pfefferminze, Zitrone)</li>
-    </ul>
-    <p style="margin-top:0.75rem;font-style:italic;color:var(--text3)">Kein Zustand ist dauerhaft. Du findest deinen Weg zurück.</p></div>`,
-  kotze: null
+    <p style="margin-top:.75rem;font-style:italic;color:var(--text3)">Kein Zustand ist dauerhaft. Du findest deinen Weg zurück.</p></div>`,
+  kotze: `<div class="kotze-area">
+    <h3>Auskotzseite – alles raus</h3>
+    <p>Was hier steht, wird nicht gespeichert. Kein Filter, keine Bewertung, keine Folgen. Lass alles raus.</p>
+    <textarea id="kotze-tx" placeholder="Schreib alles heraus – so viel du willst..."></textarea>
+    <button class="btn-rose" style="margin-top:.75rem" onclick="document.getElementById('kotze-tx').value='';toast('Alles gelöscht.')">Alles löschen</button>
+  </div>`
 };
 
 function openSOS() {
-  document.getElementById('sos-panel').classList.add('on');
+  if (breathTimer) { clearTimeout(breathTimer); breathTimer = null; }
   document.getElementById('sos-content').innerHTML = '';
-  document.querySelectorAll('.panel').forEach(p => { p.style.opacity = '0.2'; p.style.pointerEvents = 'none'; });
-  document.getElementById('sos-panel').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('sos-wrap').classList.add('on');
+  document.querySelectorAll('.panel').forEach(p => { p.style.opacity='.15'; p.style.pointerEvents='none'; });
+  document.getElementById('sos-wrap').scrollIntoView({behavior:'smooth'});
 }
-
 function closeSOS() {
   if (breathTimer) { clearTimeout(breathTimer); breathTimer = null; }
-  document.getElementById('sos-panel').classList.remove('on');
+  document.getElementById('sos-wrap').classList.remove('on');
   document.getElementById('sos-content').innerHTML = '';
-  document.querySelectorAll('.panel').forEach(p => { p.style.opacity = ''; p.style.pointerEvents = ''; });
+  document.querySelectorAll('.panel').forEach(p => { p.style.opacity=''; p.style.pointerEvents=''; });
 }
-
-function sosShow(method) {
-  const el = document.getElementById('sos-content');
-  if (method === 'kotze') {
-    el.innerHTML = `<div class="kotze-area">
-      <h3>Auskotzseite – alles raus</h3>
-      <p>Was hier steht, wird nicht gespeichert. Kein Filter, keine Bewertung, keine Folgen. Lass alles raus.</p>
-      <textarea placeholder="Schreib alles heraus – so viel du willst..." id="kotze-tx"></textarea>
-      <button class="btn-rose" style="margin-top:0.75rem" onclick="document.getElementById('kotze-tx').value='';toast('Alles gelöscht.')">Alles löschen und neu beginnen</button>
-    </div>`;
-  } else {
-    el.innerHTML = sosMethods[method] || '';
-  }
-  el.scrollIntoView({ behavior: 'smooth' });
+function sosShow(m) {
+  document.getElementById('sos-content').innerHTML = SOS_CONTENT[m] || '';
+  document.getElementById('sos-content').scrollIntoView({behavior:'smooth'});
 }
-
 function startBreath() {
   if (breathTimer) clearTimeout(breathTimer);
-  const bc = document.getElementById('bc');
-  const bt = document.getElementById('breath-text');
+  const bc = document.getElementById('bc'), bi = document.getElementById('breath-info');
   if (!bc) return;
   const phases = [
-    { label: 'Einatmen...', cls: 'in', dur: 4000, info: 'Einatmen – 4 Sekunden' },
-    { label: 'Halten...', cls: 'hold', dur: 7000, info: 'Halten – 7 Sekunden' },
-    { label: 'Ausatmen...', cls: 'out', dur: 8000, info: 'Ausatmen – 8 Sekunden' }
+    {label:'Einatmen...', cls:'in',   dur:4000, info:'Einatmen – 4 Sekunden'},
+    {label:'Halten...',   cls:'hold', dur:7000, info:'Halten – 7 Sekunden'},
+    {label:'Ausatmen...', cls:'out',  dur:8000, info:'Ausatmen – 8 Sekunden'}
   ];
   let i = 0;
   function next() {
     if (!document.getElementById('bc')) return;
     bc.className = 'breath-circle ' + phases[i].cls;
     bc.textContent = phases[i].label;
-    if (bt) bt.textContent = phases[i].info;
-    breathTimer = setTimeout(() => { i = (i + 1) % 3; next(); }, phases[i].dur);
+    if (bi) bi.textContent = phases[i].info;
+    breathTimer = setTimeout(() => { i=(i+1)%3; next(); }, phases[i].dur);
   }
   next();
 }
@@ -1876,39 +1123,23 @@ function startBreath() {
    ============================================================ */
 function showTab(t) {
   document.querySelectorAll('.tab').forEach(b => b.classList.remove('on'));
-  document.querySelector(`[data-t="${t}"]`).classList.add('on');
+  const tb = document.querySelector(`[data-t="${t}"]`); if (tb) tb.classList.add('on');
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
-  const panel = document.getElementById('p-' + t);
-  if (panel) panel.classList.add('on');
-  document.getElementById('detail-area').innerHTML = '';
-  if (t === 'e') renderEntries();
-  if (t === 'tr') renderTriggers();
-  if (t === 'st') renderStats();
-  if (t === 'p') renderParts();
+  const panel = document.getElementById('p-' + t); if (panel) panel.classList.add('on');
+  closeDetail();
+  cachedEntries = []; cachedDreams = [];
+  if (t==='e')  renderEntries();
+  if (t==='tr') renderTriggers();
+  if (t==='st') renderStats();
+  if (t==='p')  renderParts();
 }
 
 /* ============================================================
-   SECURITY – HTML ESCAPE
-   ============================================================ */
-function escHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-/* ============================================================
-   KEYBOARD SHORTCUTS
+   KEYBOARD
    ============================================================ */
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.id === 'l-pass') doLogin();
-  if (e.key === 'Escape') {
-    document.getElementById('detail-area').innerHTML = '';
-    closeSOS();
-  }
+  if (e.key === 'Escape') { closeDetail(); closeSOS(); }
 });
 
 /* ============================================================
@@ -1916,93 +1147,5 @@ document.addEventListener('keydown', e => {
    ============================================================ */
 init();
 </script>
-
-<!--
-=================================================================
-SUPABASE SQL SCHEMA
-=================================================================
-Führe dieses SQL in deinem Supabase SQL Editor aus (einmalig):
-
--- Aktiviere Row Level Security für alle Tabellen
-
--- Journal-Einträge
-CREATE TABLE journal_entries (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  mood TEXT,
-  intensity INTEGER CHECK (intensity >= 0 AND intensity <= 10),
-  body_symptoms TEXT,
-  sleep_quality INTEGER CHECK (sleep_quality >= 0 AND sleep_quality <= 10),
-  energy_level INTEGER CHECK (energy_level >= 0 AND energy_level <= 10),
-  events TEXT,
-  contacts TEXT,
-  activities TEXT,
-  thoughts TEXT,
-  triggers TEXT,
-  coping TEXT,
-  food TEXT,
-  selfcare TEXT,
-  reflex1 TEXT,
-  reflex2 TEXT,
-  reflex3 TEXT,
-  grounding INTEGER CHECK (grounding >= 0 AND grounding <= 10)
-);
-ALTER TABLE journal_entries ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Nutzer sehen nur eigene Einträge" ON journal_entries
-  FOR ALL USING (auth.uid() = user_id);
-
--- Traumeinträge
-CREATE TABLE dream_entries (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  content TEXT,
-  symbols TEXT,
-  feelings_in_dream TEXT,
-  feelings_on_waking TEXT,
-  clarity INTEGER CHECK (clarity >= 0 AND clarity <= 10),
-  intensity INTEGER CHECK (intensity >= 0 AND intensity <= 10),
-  sleep_quality INTEGER CHECK (sleep_quality >= 0 AND sleep_quality <= 10),
-  wake_time TEXT,
-  is_nightmare BOOLEAN DEFAULT FALSE,
-  interpretation TEXT,
-  parts_connection TEXT
-);
-ALTER TABLE dream_entries ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Nutzer sehen nur eigene Träume" ON dream_entries
-  FOR ALL USING (auth.uid() = user_id);
-
--- Innere Anteile
-CREATE TABLE inner_parts (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  name TEXT NOT NULL,
-  emoji TEXT,
-  role TEXT,
-  needs TEXT
-);
-ALTER TABLE inner_parts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Nutzer sehen nur eigene Anteile" ON inner_parts
-  FOR ALL USING (auth.uid() = user_id);
-
--- Anteile-Arbeit
-CREATE TABLE parts_work (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  active_part TEXT,
-  message TEXT,
-  response TEXT,
-  needs TEXT
-);
-ALTER TABLE parts_work ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Nutzer sehen nur eigene Anteile-Arbeit" ON parts_work
-  FOR ALL USING (auth.uid() = user_id);
-
-=================================================================
--->
-
 </body>
 </html>
